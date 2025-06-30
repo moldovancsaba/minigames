@@ -173,6 +173,44 @@ DELETE /api/projects/[id]
   }
   ```
 
+## Module Boundaries and Interactions
+
+### Organizations Module
+- **Location**: `/app/organizations`
+- **Role**: Manages organization data and operations
+- **Components**:
+  - Independent layout with organization-specific navigation
+  - Organization list and detail views
+  - Organization settings management
+  - Member management interface
+- **Interactions**:
+  - Projects Module: Organization-project associations
+  - User Management: Member permissions and roles
+
+### Projects Module
+- **Location**: `/app/projects`
+- **Role**: Handles project operations and metadata
+- **Components**:
+  - Project-specific layout and navigation
+  - Project creation and management views
+  - Project settings interface
+  - Resource allocation tools
+- **Interactions**:
+  - Organizations Module: Project ownership and transfers
+  - Builder Module: Project content editing
+
+### Builder Module
+- **Location**: `/app/builder`
+- **Role**: Mosaic creation and editing interface
+- **Components**:
+  - Builder-specific layout with specialized tools
+  - ImageUploader for asset management
+  - Canvas management system
+  - State management for undo/redo
+- **Interactions**:
+  - Projects Module: Loads and saves project content
+  - Organizations Module: Checks editing permissions
+
 ### Navigation Component
 - **Role**: Primary application navigation system
 - **Dependencies**: Next.js App Router, React

@@ -1,5 +1,54 @@
 # Release Notes
 
+## [v4.0.0] — 2025-06-30T21:05:24.000Z
+
+### Added
+- Complete UI Controls for Organizations and Projects
+  - Interactive tables with loading states
+  - Proper error handling and display
+  - Empty state handling
+  - Type-safe data management
+  - Real-time updates after operations
+
+### Technical Details
+- Added shared UI components (ConfirmDialog)
+- Implemented client-side data hooks with proper TypeScript interfaces
+- Added loading and error states with proper UX feedback
+- Integrated with MongoDB service layer
+- Added Tailwind CSS for styling
+
+### Infrastructure
+- Fixed TypeScript configuration for better type safety
+- Improved project structure with proper component organization
+- Enhanced error handling across the application
+
+## [v3.3.0] - 2025-06-30T20:38:35.000Z
+
+### Added
+- Organization and Project Management UI
+  - CRUD operations for organizations and projects
+  - Interactive forms with validation
+  - Confirmation dialogs for destructive actions
+  - Error handling and feedback
+  - Real-time updates after operations
+
+## [v3.2.0] - 2025-06-30T20:45:23.000Z
+
+### Added
+- Module Separation and Builder Integration
+  - Independent modules for Organizations, Projects, and Builder
+  - Dedicated layouts and routing for each module
+  - Test suites for module components
+  - Updated navigation system with module-specific controls
+  - Comprehensive module documentation in ARCHITECTURE.md
+
+### Technical Details
+- Created separate module layouts with routing
+- Implemented test suites for each module
+- Added ImageUploader integration in Builder module
+- Enhanced module boundaries documentation
+- Updated navigation to support module independence
+
 ## [v3.1.0] - 2025-06-30T19:28:28Z
 
 ### Added
