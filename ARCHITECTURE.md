@@ -183,9 +183,19 @@ DELETE /api/projects/[id]
   - Organization list and detail views
   - Organization settings management
   - Member management interface
+  - NewOrganizationModal for entity creation
+- **API Endpoints**:
+  - GET /api/organizations - List organizations
+  - POST /api/organizations - Create organization
+  - GET /api/organizations/current - Get current active organization
+- **Data Requirements**:
+  - Name (required): Organization display name
+  - Slug (auto-generated): URL-friendly identifier
+  - Description (optional): Detailed information
 - **Interactions**:
   - Projects Module: Organization-project associations
   - User Management: Member permissions and roles
+  - Current Organization Context: Provides active org context
 
 ### Projects Module
 - **Location**: `/app/projects`
@@ -195,9 +205,32 @@ DELETE /api/projects/[id]
   - Project creation and management views
   - Project settings interface
   - Resource allocation tools
+  - NewProjectModal for entity creation
+- **API Endpoints**:
+  - GET /api/projects - List projects
+  - POST /api/projects - Create project
+- **Data Requirements**:
+  - Name (required): Project display name
+  - Slug (auto-generated): URL-friendly identifier
+  - Description (optional): Detailed information
+  - OrganizationId (required): Owner organization reference
+  - Visibility (required): public/private setting
+  - Status (required): active/archived state
+  - Settings (auto-initialized):
+    - allowComments: boolean
+    - moderateComments: boolean
+    - enableSharing: boolean
+    - allowDownloads: boolean
+    - allowedFileTypes: string[]
+  - Metadata (auto-initialized):
+    - totalImages: number
+    - lastActivity: Date
+    - tags: string[]
+    - contributors: string[]
 - **Interactions**:
   - Organizations Module: Project ownership and transfers
   - Builder Module: Project content editing
+  - Current Organization Context: Required for project creation
 
 ### Shared UI Components
 - **Location**: `/components/shared`

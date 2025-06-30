@@ -1,5 +1,25 @@
 # Release Notes
 
+## [v4.2.0] - 2025-06-30T22:01:26.000Z
+
+### Added
+- Current organization context system
+  - New API endpoint `/api/organizations/current`
+  - useCurrentOrganization React hook
+  - Organization-aware project creation
+
+### Enhanced
+- Organization creation with automatic slug generation
+- Project creation with full data initialization
+  - Required fields validation
+  - Default settings and metadata
+  - Organization context integration
+
+### Technical Details
+- Added comprehensive data validation
+- Implemented proper error handling
+- Added TypeScript interfaces for form data
+- Created shared modal components
 ## [v4.1.0] - 2025-10-05T15:00:00.000Z
 
 ### Changed
