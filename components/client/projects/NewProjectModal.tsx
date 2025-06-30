@@ -8,7 +8,14 @@ import { Modal } from '@/components/shared/Modal';
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (project: { name: string; description: string }) => Promise<void>;
+  onSubmit: (project: {
+    name: string;
+    description: string;
+    slug: string;
+    organizationId: string;
+    visibility: 'public' | 'private';
+    status: 'active' | 'archived';
+  }) => Promise<void>;
 }
 
 export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProps) {
@@ -17,13 +24,28 @@ export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Generate a URL-friendly slug from the name
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      await onSubmit({ name, description });
+      await onSubmit({
+        name,
+        description,
+        slug: generateSlug(name),
+        organizationId: '507f1f77bcf86cd799439011', // TODO: Get from context or prop
+        visibility: 'private',
+        status: 'active'
+      });
       setName('');
       setDescription('');
       onClose();

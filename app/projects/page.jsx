@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useProjects } from '@/app/hooks/useProjects';
+import { useCurrentOrganization } from '@/app/hooks/useCurrentOrganization';
 import { NewProjectModal } from '@/components/client/projects/NewProjectModal';
 import { Button } from '@/components/shared/Button';
+import { LoadingState } from '@/components/shared/LoadingState';
 
 const ProjectRow = ({ project }) => (
   <tr key={project._id}>
@@ -34,8 +36,12 @@ const LoadingTable = () => (
 );
 
 export default function ProjectsPage() {
-  const { projects, loading, error, setProjects } = useProjects();
+  const { projects, loading: projectsLoading, error: projectsError, setProjects } = useProjects();
+  const { organization, loading: orgLoading, error: orgError } = useCurrentOrganization();
   const [showNewModal, setShowNewModal] = useState(false);
+
+  const loading = projectsLoading || orgLoading;
+  const error = projectsError || orgError;
 
   const handleCreateProject = async (data) => {
     const response = await fetch('/api/projects', {
@@ -66,16 +72,27 @@ export default function ProjectsPage() {
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
             <Button
               type="button"
-              onClick={() => setShowNewModal(true)}
+              onClick={() => {
+                if (!organization) {
+                  alert('Please create an organization first');
+                  return;
+                }
+                setShowNewModal(true);
+              }}
             >
               <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5 inline-block" aria-hidden="true" />
               New Project
             </Button>
-            <NewProjectModal
-              open={showNewModal}
-              onClose={() => setShowNewModal(false)}
-              onSubmit={handleCreateProject}
-            />
+            {organization && (
+              <NewProjectModal
+                open={showNewModal}
+                onClose={() => setShowNewModal(false)}
+                onSubmit={(data) => handleCreateProject({
+                  ...data,
+                  organizationId: organization._id,
+                })}
+              />
+            )}
           </div>
         </div>
 

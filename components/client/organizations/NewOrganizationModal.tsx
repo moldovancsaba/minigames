@@ -8,7 +8,7 @@ import { Modal } from '@/components/shared/Modal';
 interface NewOrganizationModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (organization: { name: string; description: string }) => Promise<void>;
+  onSubmit: (organization: { name: string; description: string; slug: string }) => Promise<void>;
 }
 
 export function NewOrganizationModal({ open, onClose, onSubmit }: NewOrganizationModalProps) {
@@ -17,13 +17,25 @@ export function NewOrganizationModal({ open, onClose, onSubmit }: NewOrganizatio
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Generate a URL-friendly slug from the name
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      await onSubmit({ name, description });
+      await onSubmit({
+        name,
+        description,
+        slug: generateSlug(name)
+      });
       setName('');
       setDescription('');
       onClose();
