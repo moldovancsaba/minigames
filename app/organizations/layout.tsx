@@ -14,8 +14,8 @@ export default function OrganizationsLayout({
       <div className="min-h-screen bg-gray-100">
         <Navigation />
         <Suspense fallback={<div>Loading organizations...</div>}>
-          <main className="py-10">
-            <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          <main className="w-full nav-offset min-h-[calc(100vh-var(--nav-height))]">
+            <div className="content-container">
               {children}
             </div>
           </main>

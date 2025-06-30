@@ -1,5 +1,12 @@
 # Release Notes
 
+## [v4.1.0] - 2025-10-05T15:00:00.000Z
+
+### Changed
+- Standardized builder page UI with shared components
+- Updated button styling to use indigo color scheme
+- Improved form element consistency
+- Unified loading states across pages
 ## [v4.0.0] — 2025-06-30T21:05:24.000Z
 
 ### Added

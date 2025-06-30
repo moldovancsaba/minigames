@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/shared/Button';
+import { TextArea } from '@/components/shared/Form';
 
 export default function ImageUploader() {
   const [urls, setUrls] = useState('');
@@ -68,25 +70,16 @@ export default function ImageUploader() {
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="p-6">
         <form onSubmit={handleSubmit} className="mb-8">
-          <div className="mb-4">
-            <label htmlFor="urls" className="block text-sm font-medium mb-2">
-              Add Image URLs (one per line)
-            </label>
-            <textarea
-              id="urls"
-              value={urls}
-              onChange={(e) => setUrls(e.target.value)}
-              className="w-full h-32 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
-          >
+          <TextArea
+            id="urls"
+            label="Add Image URLs (one per line)"
+            value={urls}
+            onChange={(e) => setUrls(e.target.value)}
+            placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+          />
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Adding Images...' : 'Add Images'}
-          </button>
+          </Button>
         </form>
         {error && (
           <div className="mt-6 mb-4 p-4 bg-red-100 text-red-700 rounded-lg">

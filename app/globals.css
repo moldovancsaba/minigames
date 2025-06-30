@@ -2,14 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure CSS variables are available immediately */
+:root {
+  --nav-height: 4rem;
+  --content-padding: 1.5rem;
+  --max-content-width: 80rem;
+}
+
+/* Base styles */
+html {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
+  --nav-height: 4rem; /* Default height */
+  --content-padding: 1.5rem;
+  --max-content-width: 80rem;
 }
 
 body {
   margin: 0;
   padding: 0;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --nav-height: 3.5rem;
+    --content-padding: 1rem;
+  }
 }
 
 nav {
@@ -52,4 +81,29 @@ nav a:hover {
   height: auto;
   margin: 0;
   padding: 0;
+}
+
+/* Minimum heights and widths */
+.content-container {
+  min-height: 100px;
+  min-width: 320px; /* Minimum supported viewport */
+}
+
+/* Prevent content overflow */
+.overflow-container {
+  max-height: calc(100vh - var(--nav-height));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Navigation offset for main content */
+.nav-offset {
+  padding-top: var(--nav-height);
+}
+
+/* Handle very large screens */
+@media (min-width: 1920px) {
+  :root {
+    --max-content-width: 100rem;
+  }
 }

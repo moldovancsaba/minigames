@@ -199,6 +199,32 @@ DELETE /api/projects/[id]
   - Organizations Module: Project ownership and transfers
   - Builder Module: Project content editing
 
+### Shared UI Components
+- **Location**: `/components/shared`
+- **Role**: Reusable UI elements across modules
+- **Status**: Active
+- **Components**:
+  - **Button System**:
+    - Consistent indigo color scheme (600/500)
+    - Standardized focus states
+    - Loading state integration
+  - **Form Elements**:
+    - Unified input styling
+    - Consistent validation states
+    - Standardized error messages
+  - **Loading States**:
+    - Unified loading indicators
+    - Consistent spinner animations
+    - Skeleton loading patterns
+  - **Error Messages**:
+    - Standard error display format
+    - Consistent styling and positioning
+    - Clear error feedback
+  - **Responsive Layouts**:
+    - Consistent breakpoint handling
+    - Unified grid systems
+    - Standard spacing patterns
+
 ### Builder Module
 - **Location**: `/app/builder`
 - **Role**: Mosaic creation and editing interface

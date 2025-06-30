@@ -1,12 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 
-export default function Navigation() {
+function NavigationContent() {
   return (
-    <nav className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+    <nav className="fixed top-0 left-0 w-full bg-white shadow z-50" style={{ height: 'var(--nav-height)' }}>
+      <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-full">
           <div className="flex space-x-8">
             <Link 
               href="/mosaic"
@@ -36,5 +37,13 @@ export default function Navigation() {
         </div>
       </div>
     </nav>
+  );
+}
+
+export default function Navigation() {
+  return (
+    <Suspense fallback={<nav className="fixed top-0 left-0 w-full bg-white shadow z-50" style={{ height: 'var(--nav-height)' }}></nav>}>
+      <NavigationContent />
+    </Suspense>
   );
 }
