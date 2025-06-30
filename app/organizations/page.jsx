@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useOrganizations } from '@/app/hooks/useOrganizations';
+import { NewOrganizationModal } from '@/components/client/organizations/NewOrganizationModal';
+import { Button } from '@/components/shared/Button';
 
 const OrganizationRow = ({ organization }) => (
   <tr key={organization._id}>
@@ -33,6 +35,23 @@ const LoadingTable = () => (
 
 export default function OrganizationsPage() {
   const { organizations, loading, error, setOrganizations } = useOrganizations();
+  const [showNewModal, setShowNewModal] = useState(false);
+
+  const handleCreateOrganization = async (data) => {
+    const response = await fetch('/api/organizations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create organization');
+    }
+
+    const newOrg = await response.json();
+    setOrganizations(prev => [...prev, newOrg]);
+  };
 
   return (
     <div className="space-y-6">
@@ -45,13 +64,18 @@ export default function OrganizationsPage() {
             </p>
           </div>
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-            <button
+            <Button
               type="button"
-              className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              onClick={() => setShowNewModal(true)}
             >
               <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5 inline-block" aria-hidden="true" />
               New Organization
-            </button>
+            </Button>
+            <NewOrganizationModal
+              open={showNewModal}
+              onClose={() => setShowNewModal(false)}
+              onSubmit={handleCreateOrganization}
+            />
           </div>
         </div>
 
