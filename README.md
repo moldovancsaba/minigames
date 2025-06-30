@@ -9,10 +9,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 ### Prerequisites
 
 1. Set up MongoDB configuration:
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   ```
-   The database name will be automatically extracted from your connection string.
+   - Create a `.env.local` file in the root directory
+   - Add your MongoDB connection string (refer to `.env.example` for the format)
+   - The database name will be automatically extracted from your connection string
 
 First, run the development server:
 
