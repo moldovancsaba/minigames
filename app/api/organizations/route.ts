@@ -58,8 +58,16 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     
     // Comprehensive validation
-    const requiredFields = ['name', 'slug'];
+    const requiredFields = ['name'];
     const missingFields = requiredFields.filter(field => !data[field]);
+
+    // Generate slug from name if not provided
+    if (!data.slug) {
+      data.slug = data.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
     
     if (missingFields.length > 0) {
       return NextResponse.json(
