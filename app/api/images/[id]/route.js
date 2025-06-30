@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { validateHttpMethod } from '../../../../lib/api-utils';
+
+// Define allowed HTTP methods
+const ALLOWED_METHODS = ['DELETE'];
 import clientPromise from '../../../../lib/mongodb';
 import { ObjectId } from 'mongodb';
 
@@ -8,6 +12,8 @@ import { ObjectId } from 'mongodb';
  * Returns success status
  */
 export async function DELETE(request, { params }) {
+    const methodCheck = validateHttpMethod(request, ALLOWED_METHODS);
+    if (methodCheck) return methodCheck;
     try {
         const id = params.id;
         

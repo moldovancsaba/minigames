@@ -1,7 +1,7 @@
 // Main page component with navigation only
 'use client';
 
-import Navigation from './components/Navigation';
+import Navigation from '@/components/client/Navigation';
 
 export default function Home() {
   return (

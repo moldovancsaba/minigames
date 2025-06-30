@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import { initializeCollections } from '../models';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env');
@@ -35,11 +36,13 @@ export async function connectToDatabase(): Promise<MongoConnection> {
     const client = new MongoClient(uri);
     
     cached.promise = client.connect()
-      .then((client) => {
+      .then(async (client) => {
         console.log(`MongoDB connected successfully in ${process.env.NODE_ENV} mode`);
+        const db = client.db(dbName);
+        await initializeCollections(db);
         return {
           client,
-          db: client.db(dbName),
+          db
         };
       })
       .catch((error) => {

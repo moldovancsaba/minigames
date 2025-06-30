@@ -1,10 +1,18 @@
-![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
 
-_Last updated: 2024-01-17T10:30:00.000Z_
+_Last updated: 2025-06-30T19:28:28Z_
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
+
+### Prerequisites
+
+1. Set up MongoDB configuration:
+   ```env
+   MONGODB_URI=your_mongodb_connection_string
+   ```
+   The database name will be automatically extracted from your connection string.
 
 First, run the development server:
 

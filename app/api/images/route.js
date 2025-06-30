@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { validateHttpMethod } from '../../../lib/api-utils';
+
+// Define allowed HTTP methods
+const ALLOWED_METHODS = ['GET', 'POST'];
 import { connectToDatabase } from '../../../lib/mongodb';
 
 // Validate MongoDB configuration
@@ -16,7 +20,9 @@ if (!process.env.MONGODB_URI || !process.env.MONGODB_DB) {
  * Fetches all images from the database
  * Returns a paginated list of images with proper error handling
  */
-export async function GET() {
+export async function GET(request) {
+    const methodCheck = validateHttpMethod(request, ALLOWED_METHODS);
+    if (methodCheck) return methodCheck;
     console.log('GET /api/images - Starting request');
     try {
         // Log MongoDB client connection attempt
@@ -55,6 +61,8 @@ export async function GET() {
  * Returns the newly created image entry
  */
 export async function POST(request) {
+    const methodCheck = validateHttpMethod(request, ALLOWED_METHODS);
+    if (methodCheck) return methodCheck;
     console.log('POST /api/images - Starting request');
     try {
         console.log('Parsing request body...');
