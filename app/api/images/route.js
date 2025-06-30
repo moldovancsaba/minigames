@@ -6,11 +6,10 @@ const ALLOWED_METHODS = ['GET', 'POST'];
 import { connectToDatabase } from '../../../lib/mongodb';
 
 // Validate MongoDB configuration
-if (!process.env.MONGODB_URI || !process.env.MONGODB_DB) {
+if (!process.env.MONGODB_URI) {
     console.error('MongoDB configuration missing:', {
         timestamp: new Date().toISOString(),
-        MONGODB_URI: !!process.env.MONGODB_URI,
-        MONGODB_DB: !!process.env.MONGODB_DB
+        error: 'MONGODB_URI is required'
     });
     throw new Error('MongoDB configuration is not properly set up');
 }

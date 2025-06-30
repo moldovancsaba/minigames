@@ -26,7 +26,7 @@ export async function DELETE(request, { params }) {
         }
 
         const client = await clientPromise;
-        const db = client.db(process.env.MONGODB_DB);
+        const { db } = await connectToDatabase();
         
         // Verify valid ObjectId format
         if (!ObjectId.isValid(id)) {
