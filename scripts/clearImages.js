@@ -4,7 +4,12 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const uri = "REDACTED_ROTATED_2026-08-14";
+if (!process.env.MONGODB_URI) {
+  console.error('Please provide MONGODB_URI environment variable');
+  process.exit(1);
+}
+
+const uri = process.env.MONGODB_URI;
 if (!uri) {
     console.error('Please provide MONGODB_URI environment variable');
     process.exit(1);
