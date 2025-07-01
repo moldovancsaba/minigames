@@ -116,3 +116,81 @@
   - User roles and permissions system
   - Admin user configuration
   - Role-based access control
+
+## Organization-Project Relationship Enhancement
+
+### Backend Tasks
+
+1. **Database Schema Updates**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-02T12:00:00.000Z
+   - Status: Pending
+   - Add organizationId field to Project model
+   - Update Organization model to track projects
+   - Add cascade delete functionality
+
+2. **API Endpoints Development**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-02T16:00:00.000Z
+   - Status: Pending
+   - Implement GET /api/organizations/[id] with projects
+   - Implement GET /api/projects/[id] with organization
+   - Update POST /api/projects to require organization
+   - Update DELETE handlers for cascading
+   - Add validation middleware
+
+### Frontend Tasks
+
+3. **Organization Detail View**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-03T12:00:00.000Z
+   - Status: Pending
+   - Create organization/[id]/page.tsx
+   - Implement project list within organization
+   - Add clickable project rows
+   - Add edit/delete organization functionality
+
+4. **Project Detail View**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-03T16:00:00.000Z
+   - Status: Pending
+   - Create projects/[id]/page.tsx
+   - Display parent organization info
+   - Add clickable organization link
+   - Add edit/delete project functionality
+
+5. **Project Creation Flow**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-04T12:00:00.000Z
+   - Status: Pending
+   - Update NewProjectModal
+   - Add organization selector
+   - Implement validation
+   - Add error handling
+
+6. **List View Updates**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-04T16:00:00.000Z
+   - Status: Pending
+   - Update organizations list to be clickable
+   - Update projects list to be clickable
+   - Add organization info to project rows
+   - Add project count to organization rows
+
+7. **Edit Functionality**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-05T12:00:00.000Z
+   - Status: Pending
+   - Create EditOrganizationModal
+   - Create EditProjectModal
+   - Implement update handlers
+   - Add validation and error handling
+
+8. **Delete Functionality**
+   - Owner: @moldovancsaba
+   - Due: 2025-07-05T16:00:00.000Z
+   - Status: Pending
+   - Implement organization deletion with confirmation
+   - Handle cascading project deletion
+   - Implement single project deletion
+   - Add success/error notifications

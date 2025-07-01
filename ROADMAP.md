@@ -1,5 +1,28 @@
 # Development Roadmap
 
+Last Updated: 2025-07-01T08:40:15Z
+
+## Organization-Project Relationship Enhancement (July 1-5)
+
+### Backend Development (July 1-2)
+- Database schema updates for organization-project relationships
+- Enhanced API endpoints for detailed organization and project views
+- Cascade delete functionality implementation
+- Data validation and error handling improvements
+
+### Frontend Development (July 3-5)
+- Organization detail view with project list
+- Project detail view with organization info
+- Enhanced project creation with organization selection
+- Interactive list views with navigation
+- Edit and delete functionality for both entities
+
+### Testing and Documentation (July 6-7)
+- End-to-end testing of organization-project relationships
+- Documentation updates for new features
+- Performance testing for data relationships
+- User guide updates
+
 Last Updated: 2025-07-01T00:08:01.000Z
 
 ## Q3 2025 (July - September)
