@@ -65,24 +65,6 @@ nav a:hover {
   padding-top: 40px;
 }
 
-.mosaic-container {
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  min-height: 100vh;
-}
-
-.original-image {
-  display: block;
-  max-width: none;
-  width: auto;
-  height: auto;
-  margin: 0;
-  padding: 0;
-}
-
 /* Minimum heights and widths */
 .content-container {
   min-height: 100px;

@@ -6,8 +6,8 @@ import 'tailwindcss/tailwind.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Mosaic - Image Gallery',
-  description: 'A modern image gallery application',
+  title: 'Project Management',
+  description: 'Organization and project management application',
 }
 
 export default function RootLayout({
