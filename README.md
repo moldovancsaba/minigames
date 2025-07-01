@@ -1,6 +1,6 @@
-![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-6.0.0-blue.svg)
 
-_Last updated: 2025-06-30T19:28:28Z_
+_Last updated: 2025-07-01T00:08:01.000Z_
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
@@ -12,6 +12,32 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
    - Create a `.env.local` file in the root directory
    - Add your MongoDB connection string (refer to `.env.example` for the format)
    - The database name will be automatically extracted from your connection string
+
+2. Configure Authentication and User Management:
+   - Add JWT_SECRET to `.env.local` for token signing
+   - Configure EMAIL_SERVICE settings for magic links:
+     ```env
+     EMAIL_SERVICE_API_KEY=your_api_key
+     EMAIL_FROM=noreply@yourdomain.com
+     ```
+   - Set up initial admin user:
+     ```env
+     ADMIN_EMAIL=admin@yourdomain.com
+     ```
+
+3. User Management and Access Control:
+   - Access the user management interface at `/users` (admin only)
+   - Default roles:
+     - admin: Full system access including user management
+     - user: Basic access with restricted permissions
+   - Role management:
+     - Only admins can modify user roles
+     - Users must log in before accessing protected routes
+     - Admin rights required for organization creation
+   - Authentication State:
+     - Navigation updates automatically after login
+     - Role-based visibility of features
+     - Secure session management with JWT tokens
 
 First, run the development server:
 

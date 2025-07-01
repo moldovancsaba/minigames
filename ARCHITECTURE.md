@@ -2,6 +2,72 @@
 
 ## Core Components
 
+### User Management System
+- **Role**: User access control and permission management
+- **Dependencies**: Authentication System, MongoDB
+- **Status**: Active
+
+#### Core Features
+- **User Administration**:
+  - Role-based access control (Admin/User)
+  - User listing and management
+  - Role modification interface
+  - Last login tracking
+
+#### Implementation Details
+- **Data Layer**: MongoDB with Mongoose schema
+- **API Layer**: RESTful endpoints for user operations
+- **UI Layer**: Admin-only user management interface
+- **Security**: Role-based middleware protection
+
+### Authentication System
+- **Role**: Handles user authentication and authorization
+- **Dependencies**: JWT, Next.js Middleware
+- **Status**: Active
+
+#### Auth State Management
+- **Role**: Manages authentication state and role-based visibility
+- **Dependencies**: React hooks, Next.js Router
+- **Status**: Active
+
+##### Implementation Details
+- **useAuth Hook**:
+  - Centralized auth state management
+  - Automatic state refresh on login/logout
+  - Role-based access control helpers
+  - Navigation state synchronization
+
+##### Organization Creation Workflow
+- Admin-only operation with strict role checking
+- Role verification through session middleware
+- Error handling for unauthorized attempts
+
+#### Authentication Flow
+- **Email-Only Login Process**:
+  - User initiates login with email address
+  - System generates and sends magic link
+  - User clicks link to authenticate
+  - JWT token generated and stored as HTTP-only cookie
+
+#### User Management
+- **Roles and Permissions**:
+  - Admin: Full system access and user management
+  - Organization Owner: Manage organization settings and members
+  - Member: Regular user with restricted access
+  - Guest: Read-only access to public resources
+
+#### Security Implementation
+- **JWT Token Management**:
+  - Tokens stored in HTTP-only cookies
+  - Automatic token refresh mechanism
+  - Secure token validation middleware
+
+#### Admin Configuration
+- Initial admin user setup via environment variables
+- Admin dashboard for user management
+- Role assignment and permission control
+- User activity monitoring
+
 ### Frontend (Next.js App Router)
 - **Role**: Main application interface
 - **Dependencies**: React, Next.js
@@ -73,7 +139,7 @@ graph TD
 ## Technical Stack
 
 ### Frontend
-- Next.js 13.5.11 (App Router)
+- Next.js 15.3.4 (App Router)
 - React
 - TypeScript
 

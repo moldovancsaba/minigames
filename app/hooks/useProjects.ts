@@ -35,7 +35,7 @@ export interface Project {
 }
 
 export function useProjects(organizationId?: string) {
-  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +50,11 @@ export function useProjects(organizationId?: string) {
         if (!response.ok) throw new Error('Failed to fetch projects');
         
         const { data } = await response.json();
-        setProjects(data?.projects || []);
+        const projectData = Array.isArray(data) ? data : data?.projects || [];
+        setProjects(projectData.map((project: Omit<Project, '_id'> & { _id: string | { toString(): string } }) => ({
+          ...project,
+          _id: project._id.toString()
+        })));
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');

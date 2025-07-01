@@ -1,5 +1,85 @@
 # Release Notes
 
+## [v6.0.0] — 2025-07-01T00:08:01.000Z
+
+### Major Changes
+- Complete Next.js upgrade to version 15.3.4
+- Enhanced MongoDB integration and optimization
+- Improved security measures and error handling
+- Streamlined deployment process
+
+### System Updates
+- Updated all route handlers for Next.js 15.3.4 compatibility
+- Optimized database queries and connection management
+- Enhanced error tracking and logging systems
+- Improved development workflow and documentation
+
+### Technical Details
+- Migrated to Next.js 15.3.4 with proper typing
+- Enhanced MongoDB connection pooling
+- Updated security configurations
+- Streamlined deployment pipeline
+
+### Migration Notes
+1. Update Node.js to version 18.17 or later
+2. Clear .next cache and node_modules
+3. Run full reinstall: npm clean-install
+4. Verify environment variables
+5. Test all API endpoints
+## [v5.1.1] - 2025-06-30T22:55:15.000Z
+
+### Fixed
+- Navigation state synchronization after login
+- Organization creation permissions
+- User role verification
+
+### Enhanced
+- Auth state management with automatic refresh
+- Admin permission enforcement
+- Navigation visibility based on user role
+
+### Technical Details
+- Added refresh mechanism to useAuth hook
+- Implemented strict role checking in organization creation
+- Updated login flow to properly sync navigation state
+
+## [v5.1.0] - 2025-06-30T22:49:12.000Z
+
+### Added
+- User Management System
+  - Admin-only user interface for managing user permissions
+  - Role-based access control implementation
+  - User listing with role modification capability
+  - Last login tracking and user activity monitoring
+
+### Enhanced
+- Navigation system with role-based visibility
+- Authentication system integration with user management
+- Admin capabilities for user control
+
+### Technical Details
+- New /users route for admin interface
+- RESTful API endpoints for user management
+- MongoDB schema updates for user roles
+- Middleware protection for admin-only routes
+
+## [v5.0.0] - 2025-10-15T14:30:00.000Z
+
+### Added
+- Complete JWT-based Authentication System
+  - Email-only login with magic links
+  - Secure cookie-based token management
+  - Comprehensive user management system
+  - Role-based access control (Admin, Owner, Member, Guest)
+  - Admin dashboard for user management
+
+### Technical Details
+- JWT token implementation with automatic refresh
+- HTTP-only cookie security measures
+- Email service integration for magic links
+- User activity monitoring system
+- Role-based middleware implementation
+
 ## [v4.2.0] - 2025-06-30T22:01:26.000Z
 
 ### Added

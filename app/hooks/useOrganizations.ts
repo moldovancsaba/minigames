@@ -26,7 +26,7 @@ export interface Organization {
 }
 
 export function useOrganizations() {
-  const [organizations, setOrganizations] = useState<Organization[] | null>(null);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +37,7 @@ export function useOrganizations() {
         if (!response.ok) throw new Error('Failed to fetch organizations');
         
         const { data } = await response.json();
-        setOrganizations(data?.organizations || []);
+        setOrganizations(data || []);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');

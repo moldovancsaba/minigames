@@ -18,8 +18,17 @@ export class OrganizationService {
     }
 
     const now = new Date();
+    
+    // Convert string IDs to ObjectIds and ensure proper date objects
+    const members = data.members?.map(member => ({
+      ...member,
+      userId: new ObjectId(member.userId.toString()),
+      joinedAt: new Date(member.joinedAt)
+    })) || [];
+
     const organization: Organization = {
       ...data,
+      members,
       createdAt: now,
       updatedAt: now
     };

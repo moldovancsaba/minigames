@@ -3,7 +3,7 @@
 import { ErrorBoundary } from '@/components/client/ErrorBoundary';
 import Navigation from '@/components/client/Navigation';
 
-export default function OrganizationsLayout({
+export default function UsersLayout({
   children,
 }: {
   children: React.ReactNode;

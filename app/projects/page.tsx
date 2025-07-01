@@ -2,20 +2,27 @@
 
 import React, { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { useOrganizations } from '@/app/hooks/useOrganizations';
-import { NewOrganizationModal } from '@/components/client/organizations/NewOrganizationModal';
+import { useProjects } from '@/app/hooks/useProjects';
+import { useCurrentOrganization } from '@/app/hooks/useCurrentOrganization';
+import { NewProjectModal } from '@/components/client/projects/NewProjectModal';
 import { Button } from '@/components/shared/Button';
+import { LoadingState } from '@/components/shared/LoadingState';
+import { Project } from '@/app/hooks/useProjects';
 
-const OrganizationRow = ({ organization }) => (
-  <tr key={organization._id}>
+interface ProjectRowProps {
+  project: Project;
+}
+
+const ProjectRow = ({ project }: ProjectRowProps) => (
+  <tr>
     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-      {organization.name}
+      {project.name}
     </td>
     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-      {organization.slug}
+      {project.slug}
     </td>
     <td className="px-3 py-4 text-sm text-gray-500">
-      {organization.description}
+      {project.description}
     </td>
     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
       <button className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
@@ -24,21 +31,30 @@ const OrganizationRow = ({ organization }) => (
   </tr>
 );
 
-const LoadingTable = () => (
-  <div className="animate-pulse">
-    <div className="h-8 bg-gray-200 rounded w-full mb-4"></div>
-    {[...Array(3)].map((_, i) => (
-      <div key={i} className="h-16 bg-gray-100 rounded w-full mb-2"></div>
-    ))}
-  </div>
-);
+const LoadingTable = () => {
+  // Use a proper key prefix to avoid potential key conflicts
+  const placeholderRows = Array.from({ length: 3 }, (_, index) => (
+    <div key={`loading-row-${index}`} className="h-16 bg-gray-100 rounded w-full mb-2"></div>
+  ));
 
-export default function OrganizationsPage() {
-  const { organizations, loading, error, setOrganizations } = useOrganizations();
+  return (
+    <div className="animate-pulse">
+      <div className="h-8 bg-gray-200 rounded w-full mb-4"></div>
+      {placeholderRows}
+    </div>
+  );
+};
+
+export default function ProjectsPage() {
+  const { projects, loading: projectsLoading, error: projectsError, setProjects } = useProjects();
+  const { organization, loading: orgLoading, error: orgError } = useCurrentOrganization();
   const [showNewModal, setShowNewModal] = useState(false);
 
-  const handleCreateOrganization = async (data) => {
-    const response = await fetch('/api/organizations', {
+  const loading = projectsLoading || orgLoading;
+  const error = projectsError || orgError;
+
+  const handleCreateProject = async (data: Partial<Project>) => {
+    const response = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -46,11 +62,16 @@ export default function OrganizationsPage() {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to create organization');
+      throw new Error(error.message || 'Failed to create project');
     }
 
-    const newOrg = await response.json();
-    setOrganizations(prev => [...prev, newOrg]);
+    const { data: newProject } = await response.json();
+    if (newProject && newProject._id) {
+      setProjects(prev => [...(prev || []), newProject]);
+      setShowNewModal(false);
+    } else {
+      throw new Error('Invalid project data received');
+    }
   };
 
   return (
@@ -58,24 +79,35 @@ export default function OrganizationsPage() {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-gray-900">Organizations</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Projects</h1>
             <p className="mt-2 text-sm text-gray-700">
-              A list of all organizations you have access to.
+              A list of all projects in your organizations.
             </p>
           </div>
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
             <Button
               type="button"
-              onClick={() => setShowNewModal(true)}
+              onClick={() => {
+                if (!organization) {
+                  alert('Please create an organization first');
+                  return;
+                }
+                setShowNewModal(true);
+              }}
             >
               <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5 inline-block" aria-hidden="true" />
-              New Organization
+              New Project
             </Button>
-            <NewOrganizationModal
-              open={showNewModal}
-              onClose={() => setShowNewModal(false)}
-              onSubmit={handleCreateOrganization}
-            />
+            {organization && (
+              <NewProjectModal
+                open={showNewModal}
+                onClose={() => setShowNewModal(false)}
+                onSubmit={(data) => handleCreateProject({
+                  ...data,
+                  organizationId: organization?._id?.toString() || '',
+                })}
+              />
+            )}
           </div>
         </div>
 
@@ -103,14 +135,14 @@ export default function OrganizationsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {organizations?.length === 0 ? (
+                    {!projects || projects.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="text-center py-4 text-sm text-gray-500">
-                          No organizations found.
+                        <td colSpan={4} className="text-center py-4 text-sm text-gray-500">
+                          No projects found.
                         </td>
                       </tr>
-                    ) : (organizations || []).map((org) => (
-                      <OrganizationRow key={org._id} organization={org} />
+                    ) : projects.map((project) => (
+                      <ProjectRow key={project._id} project={project} />
                     ))}
                     </tbody>
                 </table>
