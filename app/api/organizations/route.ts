@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrganizationService } from '@/services/organizationService';
-import { UserService } from '@/lib/userService';
-import { getSession } from '@/lib/auth';
+import { OrganizationModel } from '@/lib/mongodb/organizationModel';
 
 // GET /api/organizations
 export async function GET(request: NextRequest) {
-  const organizations = await OrganizationService.getOrganizations();
+  const organizations = await OrganizationModel.findAll();
 
   return NextResponse.json({
     success: true,
@@ -20,7 +18,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Create organization
-    const organization = await OrganizationService.createOrganization({
+    const organization = await OrganizationModel.create({
       name: data.name,
       slug: data.slug,
       description: data.description

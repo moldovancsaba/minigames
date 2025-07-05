@@ -24,6 +24,12 @@
    - Check suspense boundary placement
 
 ## Dev
+
+- Correctly mocked Next.js app router and useAuth hook for testing layout components.
+  - Implemented a custom test utility to provide consistent mocks.
+  - Removed incorrect widget test that expected a non-existent image uploader.
+  - Use of testing library for React UI components ensures accurate app behavior verification.
+  - Improved understanding of mocking external dependencies and test setup.
 - Next.js 13+ App Router requires careful consideration of component hierarchy and data flow
 - TypeScript configuration optimized for Next.js needs specific compiler options
 
@@ -295,6 +301,71 @@ All major interface routes compiled and accessible:
    - Average response time: ~400ms
 3. Image retrieval system performing efficiently
    - Consistent 160ms response time for image queries
+
+## [SSO Integration] - 2025-07-05T17:23:26Z
+
+Implemented ThanPerfect SSO integration for user authentication:
+- Added SSO callback route handler
+- Updated login flow to redirect to ThanPerfect SSO
+- Configured middleware to handle SSO callback
+- Maintained existing JWT token system for session management
+
+Key Learning: Keeping existing auth tokens while delegating authentication allows for seamless SSO integration without breaking existing session management.
+
+## [System Health Check] - 2024-02-13T12:00:00.000Z
+
+✅ Full system validation completed successfully:
+- Static page generation: 22/22 pages
+- Route component compilation: No errors
+- TypeScript types: All valid
+- ESLint: No warnings/errors 
+- MongoDB: Production connections stable
+
+Key Learning: Regular health checks help confirm system stability and catch issues early.
+
+## Development
+
+### Organization Deletion Testing Setup (2025-07-05T20:32:42.000Z)
+
+Key considerations for testing public organization deletion:
+
+1. **Test Structure**
+   - Tests located in `__tests__` directories within feature folders
+   - Using @testing-library/react for component testing
+   - Separate test files for API, UI, and data integrity
+
+2. **Database Testing**
+   - MongoDB with Mongoose for data layer
+   - Models in `/lib/mongodb/` directory
+   - Key models: `organizationModel.ts`, `projectModel.ts`
+
+3. **Testing Approach**
+   - Direct API testing without authentication
+   - UI component interaction testing
+   - Database state verification
+   - Error scenario coverage
+
+Learning: Comprehensive test coverage requires coordination between UI, API, and database layers to ensure system integrity.
+
+### Organization Deletion Testing Completion (2025-07-05T20:52:17.000Z)
+
+Key Learnings from Test Implementation:
+1. **Test Structure Benefits**
+   - Organizing tests by feature in __tests__ directories improves maintainability
+   - Using @testing-library/react enables realistic user interaction testing
+   - Separate test files for different layers (UI/API/DB) provides clear coverage metrics
+
+2. **Testing Strategy Insights**
+   - Direct API testing without auth simplifies test setup
+   - UI component testing catches user interaction issues early
+   - Database state verification ensures data integrity
+   - Error scenarios need explicit coverage
+
+3. **Test Implementation Practices**
+   - Keep test files close to tested components
+   - Use meaningful test descriptions
+   - Include both happy path and error scenarios
+   - Verify cascading effects in related collections
 
 ## Development
 - 2024-01-17T12:45:00.000Z: Production deployment requires proper authentication setup for API endpoints

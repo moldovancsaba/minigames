@@ -1,6 +1,4 @@
-import mongoose from 'mongoose';
-import dbConnect from '@/lib/db';
-import { ObjectId } from 'mongodb';
+// Organization type definitions
 
 interface CreateOrganizationInput {
   name: string;
@@ -10,10 +8,24 @@ interface CreateOrganizationInput {
 }
 
 export interface Organization {
+  projects?: any[];
   _id: string;
   name: string;
   slug: string;
   description?: string;
+  status: 'active' | 'inactive' | 'archived';
+  members: {
+    userId: string;
+    role: 'owner' | 'admin' | 'member';
+    joinedAt: string;
+    invitedBy?: string;
+  }[];
+  settings: {
+    allowPublicProjects: boolean;
+    defaultProjectVisibility: 'public' | 'private';
+    maxMembers?: number;
+    customDomain?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -24,87 +36,73 @@ interface CreateOrganizationDto {
   description?: string;
 }
 
-const organizationSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 2,
-    maxlength: 100
-  },
-  slug: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    minlength: 2,
-    maxlength: 50,
-    match: /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-  },
-  description: {
-    type: String,
-    trim: true,
-    maxlength: 1000
-  },
-  status: {
-    type: String,
-    enum: ['active', 'inactive', 'archived'],
-    default: 'active'
-  },
-  members: [{
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User'
-    },
-    role: {
-      type: String,
-      enum: ['owner', 'admin', 'member'],
-      required: true
-    },
-    joinedAt: {
-      type: Date,
-      required: true,
-      default: Date.now
-    }
-  }],
-  settings: {
-    allowPublicProjects: {
-      type: Boolean,
-      default: true
-    },
-    defaultProjectVisibility: {
-      type: String,
-      enum: ['public', 'private'],
-      default: 'private'
-    }
-  }
-}, {
-  timestamps: true
-});
+// Define member type
+interface OrganizationMember {
+  userId: string;
+  role: 'owner' | 'admin' | 'member';
+  joinedAt: string;
+}
 
-// Create the model if it doesn't exist
-const Organization = mongoose.models.Organization || mongoose.model('Organization', organizationSchema);
-
-// Ensure IDs are handled consistently
-const serializeOrganization = (org: any) => {
-  return {
-    ...org.toObject(),
-    _id: org._id.toString()
-  };
-};
+// Define settings type
+interface OrganizationSettings {
+  allowPublicProjects: boolean;
+  defaultProjectVisibility: 'public' | 'private';
+}
 
 export class OrganizationService {
-  static async createOrganization(data: CreateOrganizationDto) {
-    await dbConnect();
-    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const org = await Organization.create({ name: data.name, slug, description: data.description });
-    return serializeOrganization(org);
+  static async createOrganization(data: CreateOrganizationDto): Promise<Organization | null> {
+    try {
+      const response = await fetch('/api/organizations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to create organization');
+      }
+
+      const { data: newOrg } = await response.json();
+      return newOrg;
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      throw error;
+    }
   }
 
-  static async getOrganizations() {
-    await dbConnect();
-    const orgs = await Organization.find().sort({ createdAt: -1 });
-    return orgs.map(serializeOrganization);
+  static async deleteOrganization(id: string): Promise<boolean> {
+    try {
+      const response = await fetch(`/api/organizations/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to delete organization');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting organization:', error);
+      throw error;
+    }
+  }
+
+  static async getOrganizations(): Promise<Organization[]> {
+    try {
+      const response = await fetch('/api/organizations');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to fetch organizations');
+      }
+      const { data } = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching organizations:', error);
+      throw error;
+    }
   }
 }

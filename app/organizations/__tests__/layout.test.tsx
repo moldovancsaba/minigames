@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@/test/test-utils'
 import OrganizationsLayout from '../layout'
 
 describe('OrganizationsLayout', () => {

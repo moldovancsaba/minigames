@@ -1,34 +1,56 @@
 'use client';
 
-import { type Organization } from '@/services/organizationService';
+import { type Organization } from '@/services/client/organizationService';
+import { OrganizationService } from '@/services/client/organizationService';
 
 import React, { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useOrganizations } from '@/app/hooks/useOrganizations';
 import { NewOrganizationModal } from '@/components/client/organizations/NewOrganizationModal';
+import { DeleteOrganizationButton } from '@/components/client/organizations/DeleteOrganizationButton';
 import { Button } from '@/components/shared/Button';
 
 interface OrganizationRowProps {
   organization: Organization;
+  projectCount?: number;
 }
 
-const OrganizationRow: React.FC<OrganizationRowProps> = ({ organization }) => (
-  <tr>
-    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-      {organization.name}
-    </td>
-    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-      {organization.slug}
-    </td>
-    <td className="px-3 py-4 text-sm text-gray-500">
-      {organization.description}
-    </td>
-    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-      <button className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-      <button className="text-red-600 hover:text-red-900">Delete</button>
-    </td>
-  </tr>
-);
+const OrganizationRow: React.FC<OrganizationRowProps> = ({ organization, projectCount }) => {
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking delete button
+    if (e.target instanceof HTMLElement && e.target.closest('button')) {
+      e.stopPropagation();
+      return;
+    }
+    window.location.href = `/organizations/${organization._id}`;
+  };
+
+  return (
+    <tr className="hover:bg-gray-50 cursor-pointer" onClick={handleRowClick}>
+      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+        <span className="text-indigo-600 hover:text-indigo-900">{organization.name}</span>
+        {projectCount !== undefined && (
+          <span className="ml-2 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+            {projectCount} {projectCount === 1 ? 'project' : 'projects'}
+          </span>
+        )}
+      </td>
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+        {organization.slug}
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500">
+        {organization.description}
+      </td>
+      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+        <button className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+        <DeleteOrganizationButton
+          organizationId={organization._id}
+          organizationName={organization.name}
+        />
+      </td>
+    </tr>
+  );
+};
 
 const LoadingTable = () => {
   const placeholderRows = Array.from({ length: 3 }, (_, index) => (
@@ -46,8 +68,33 @@ const LoadingTable = () => {
 export default function OrganizationsPage() {
   const { organizations = [], loading, error, setOrganizations } = useOrganizations();
   const [showNewModal, setShowNewModal] = useState(false);
+  const [projectCounts, setProjectCounts] = useState<Record<string, number>>({});
+
+  // Fetch project counts for each organization
+  React.useEffect(() => {
+    const fetchProjectCounts = async () => {
+      const counts: Record<string, number> = {};
+      for (const org of organizations) {
+        try {
+          const response = await fetch(`/api/organizations/${org._id}/projects/stats`);
+          if (response.ok) {
+            const { count } = await response.json();
+            counts[org._id] = count;
+          }
+        } catch (error) {
+          console.error(`Failed to fetch project count for organization ${org._id}:`, error);
+        }
+      }
+      setProjectCounts(counts);
+    };
+
+    if (organizations.length > 0) {
+      fetchProjectCounts();
+    }
+  }, [organizations]);
 
 const handleCreateOrganization = async (data: { name: string; slug?: string; description?: string }) => {
+    try {
     // Get current user's ID
     const userResponse = await fetch('/api/me');
     if (!userResponse.ok) {
@@ -55,26 +102,19 @@ const handleCreateOrganization = async (data: { name: string; slug?: string; des
     }
     const user = await userResponse.json();
     
-    const response = await fetch('/api/organizations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...data,
-        creatorId: user.data._id
-      }),
+    const newOrg = await OrganizationService.createOrganization({
+      ...data,
+      creatorId: user.data._id
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create organization');
-    }
-
-    const { data: newOrg } = await response.json();
     if (newOrg && newOrg._id) {
       setOrganizations(prev => [...prev, newOrg]);
       setShowNewModal(false);
     } else {
       throw new Error('Invalid organization data received');
+    }
+    } catch (error) {
+      console.error('Error creating organization:', error);
+      throw error;
     }
   };
 
@@ -135,7 +175,11 @@ const handleCreateOrganization = async (data: { name: string; slug?: string; des
                         </td>
                       </tr>
     ) : (organizations || []).map((org: Organization) => (
-                      <OrganizationRow key={org._id?.toString()} organization={org} />
+<OrganizationRow
+  key={org._id?.toString()}
+  organization={org}
+  projectCount={projectCounts[org._id]}
+/>
                     ))}
                     </tbody>
                 </table>

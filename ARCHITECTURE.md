@@ -2,71 +2,31 @@
 
 ## Core Components
 
-### User Management System
-- **Role**: User access control and permission management
-- **Dependencies**: Authentication System, MongoDB
+### Public Access System
+- **Role**: Manages public access to all resources
+- **Dependencies**: Next.js Middleware
 - **Status**: Active
 
 #### Core Features
-- **User Administration**:
-  - Role-based access control (Admin/User)
-  - User listing and management
-  - Role modification interface
-  - Last login tracking
+- **Public Access Model**:
+  - All resources are publicly accessible
+  - No authentication required
+  - Read-only access to all content
+
+#### Security Implications
+- **Data Exposure**:
+  - All data is publicly visible
+  - No private or restricted content
+  - Consider sensitive information before publishing
 
 #### Implementation Details
-- **Data Layer**: MongoDB with Mongoose schema
-- **API Layer**: RESTful endpoints for user operations
-- **UI Layer**: Admin-only user management interface
-- **Security**: Role-based middleware protection
-
-### Authentication System
-- **Role**: Handles user authentication and authorization
-- **Dependencies**: JWT, Next.js Middleware
-- **Status**: Active
-
-#### Auth State Management
-- **Role**: Manages authentication state and role-based visibility
-- **Dependencies**: React hooks, Next.js Router
-- **Status**: Active
-
-##### Implementation Details
-- **useAuth Hook**:
-  - Centralized auth state management
-  - Automatic state refresh on login/logout
-  - Role-based access control helpers
-  - Navigation state synchronization
-
-##### Organization Creation Workflow
-- Admin-only operation with strict role checking
-- Role verification through session middleware
-- Error handling for unauthorized attempts
-
-#### Authentication Flow
-- **Email-Only Login Process**:
-  - User initiates login with email address
-  - System generates and sends magic link
-  - User clicks link to authenticate
-  - JWT token generated and stored as HTTP-only cookie
-
-#### User Management
-- **Roles and Permissions**:
-  - Admin: Full system access and user management
-  - Organization Owner: Manage organization settings and members
-  - Member: Regular user with restricted access
-  - Guest: Read-only access to public resources
-
-#### Security Implementation
-- **JWT Token Management**:
-  - Tokens stored in HTTP-only cookies
-  - Automatic token refresh mechanism
-  - Secure token validation middleware
-
-#### Admin Configuration
-- Initial admin user setup via environment variables
-- Admin dashboard for user management
-- Role assignment and permission control
-- User activity monitoring
+- **Data Layer**: MongoDB with public access
+- **API Layer**: Public RESTful endpoints
+- **Security Considerations**:
+  - Rate limiting for API protection
+  - DDoS protection recommended
+  - Regular security audits essential
+  - Content moderation may be needed
 
 ### Frontend (Next.js App Router)
 - **Role**: Main application interface
@@ -151,7 +111,7 @@ graph TD
 ### Deployment Infrastructure
 - **Platform**: Vercel
 - **Environment**: Production
-- **Authentication**: Required for API endpoints
+- **Authentication**: Public access for all endpoints
 - **Configuration**:
   - MongoDB connection via connection string (includes database name)
   - API authentication for endpoint protection
@@ -254,14 +214,26 @@ DELETE /api/projects/[id]
   - GET /api/organizations - List organizations
   - POST /api/organizations - Create organization
   - GET /api/organizations/current - Get current active organization
+  - DELETE /api/organizations/[id] - Delete organization and associated projects
 - **Data Requirements**:
   - Name (required): Organization display name
   - Slug (auto-generated): URL-friendly identifier
   - Description (optional): Detailed information
+- **Service Features**:
+  - Transaction-safe deletion of organizations and projects
+  - Enhanced error handling with specific error types
+  - Comprehensive logging for debugging and tracing
+  - ID validation before operations
+  - Detailed operation status reporting
+  - Type-safe deletion tracking with MongoDB DeleteResult interface
+  - Proper variable scoping for transaction operations
+- **Return Types**:
+  - Delete Operation: { success: boolean; deletedProjectsCount: number }
+  - Standard Error Types: 'NotFoundError', 'ValidationError', 'DatabaseError'
 - **Interactions**:
-  - Projects Module: Organization-project associations
-  - User Management: Member permissions and roles
-  - Current Organization Context: Provides active org context
+  - Projects Module: Organization-project associations and cascading deletions
+  - Database Layer: Transactional operations for data integrity
+  - Logging System: Detailed operation tracking
 
 ### Projects Module
 - **Location**: `/app/projects`

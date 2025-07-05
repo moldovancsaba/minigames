@@ -1,9 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { OrganizationService } from '@/services/client/organizationService';
+import type { Organization } from '@/services/organizationService';
 
+// Re-export the Organization type for convenience
+export type { Organization };
 
-export interface Organization {
+/* Original type moved to services/organizationService.ts
+interface Organization {
   _id: string;
   name: string;
   slug: string;
@@ -23,7 +28,7 @@ export interface Organization {
   };
   createdAt: string;
   updatedAt: string;
-}
+}*/
 
 export function useOrganizations() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -33,10 +38,7 @@ export function useOrganizations() {
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await fetch('/api/organizations');
-        if (!response.ok) throw new Error('Failed to fetch organizations');
-        
-        const { data } = await response.json();
+        const data = await OrganizationService.getOrganizations();
         setOrganizations(data || []);
         setError(null);
       } catch (err) {

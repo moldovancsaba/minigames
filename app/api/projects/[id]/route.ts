@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProjectService } from '@/services/project';
+import { OrganizationService } from '@/services/organization';
+import { validateIdParam } from '@/middleware/validation';
+import type { RouteSegment } from '@/app/types/route';
 
 /**
  * GET /api/projects/[id]
@@ -22,6 +25,17 @@ export async function GET(request: NextRequest) {
     }
 
     const project = await ProjectService.getProject(id, organizationId || undefined);
+    
+    // Fetch associated organization if project exists
+    if (project) {
+      const organization = await OrganizationService.getOrganization(project.organizationId.toString());
+      // Create a new object with organization
+      return NextResponse.json({
+        success: true,
+        data: { ...project, organization },
+        timestamp: new Date().toISOString()
+      });
+    }
 
     if (!project) {
       return NextResponse.json(
@@ -133,9 +147,15 @@ export async function PUT(request: NextRequest) {
  * DELETE /api/projects/[id]
  * Delete a project
  */
+
+
 export async function DELETE(request: NextRequest) {
   try {
     const id = request.nextUrl.pathname.split('/').pop();
+    const validationError = validateIdParam(id);
+    if (validationError) {
+      return validationError;
+    }
 
     if (!id) {
       return NextResponse.json(

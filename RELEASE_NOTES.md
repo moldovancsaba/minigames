@@ -1,5 +1,38 @@
 # Release Notes
 
+## [v6.1.0] — 2025-07-05T20:52:17.000Z
+
+### Enhanced
+- Completed organization deletion testing framework
+- Added comprehensive test structure for public access system
+- Enhanced test coverage across UI, API, and database layers
+
+### Technical Details
+- Implemented test files structure in __tests__
+- Added @testing-library/react integration
+- Established database testing approach
+- Created documentation for test implementation
+
+## [v6.0.2] — 2025-07-05T20:23:31.000Z
+
+### Changed
+- Enhanced organization service with improved error handling and detailed operation tracking
+- Removed auth-related checks from organization deletion process
+- Added transaction safety and detailed status reporting for organization deletions
+- Updated TypeScript types for better type safety and error handling
+- Added comprehensive logging for debugging and traceability
+
+### Technical Details
+- Modified deleteOrganization to return detailed operation status
+- Enhanced error types for better error handling
+- Improved transaction handling for data integrity
+- Added detailed logging throughout deletion process
+- Updated architecture documentation
+## [v6.0.1] — 2025-07-01T00:08:01.000Z
+
+### Patch
+- Incremented version number for consistency across documentation
+
 ## [v6.0.0] — 2025-07-01T00:08:01.000Z
 
 ### Major Changes

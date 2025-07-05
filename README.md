@@ -1,4 +1,4 @@
-![Version](https://img.shields.io/badge/version-6.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-6.0.1-blue.svg)
 
 _Last updated: 2025-07-01T00:08:01.000Z_
 

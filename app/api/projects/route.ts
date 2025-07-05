@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProjectService } from '@/services/project';
+import { ProjectModel } from '@/lib/mongodb/projectModel';
+import { OrganizationModel } from '@/lib/mongodb/organizationModel';
+import { validateObjectId } from '@/middleware/validation';
 
 /**
  * GET /api/projects
@@ -42,7 +44,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await ProjectService.listProjects(options);
+    // If organizationId is provided, get projects for that organization
+    const projects = options.organizationId
+      ? await ProjectModel.findByOrganization(options.organizationId)
+      : [];
+    
+    const result = {
+      projects,
+      total: projects.length,
+      page: options.page || 1,
+      limit: options.limit || 10
+    };
 
     return NextResponse.json({
       success: true,
@@ -74,20 +86,39 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    console.log('Received project data:', data);
 
-    // Validate required fields
-    const requiredFields = ['name', 'slug', 'organizationId', 'visibility', 'status'];
-    const missingFields = requiredFields.filter(field => !data[field]);
-
-    if (missingFields.length > 0) {
+    // Validate data directly since we already have it
+    const { name, slug, organizationId, visibility, status } = data;
+    if (!name || !slug || !organizationId || !visibility || !status) {
       return NextResponse.json(
         {
           success: false,
           error: 'Missing required fields',
-          details: {
-            required: requiredFields,
-            missing: missingFields
-          },
+          timestamp: new Date().toISOString()
+        },
+        { status: 400 }
+      );
+    }
+    // Validate ObjectId format
+    if (!validateObjectId(organizationId)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid organizationId format',
+          timestamp: new Date().toISOString()
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate slug format
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!slugRegex.test(slug)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid slug format. Must contain only lowercase letters, numbers, and hyphens',
           timestamp: new Date().toISOString()
         },
         { status: 400 }
@@ -120,7 +151,33 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    const project = await ProjectService.createProject(data);
+    // Verify organization exists
+    const organization = await OrganizationModel.findById(data.organizationId);
+    if (!organization) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Organization not found',
+          timestamp: new Date().toISOString()
+        },
+        { status: 404 }
+      );
+    }
+
+    // Validate slug uniqueness within organization
+    const isSlugUnique = await ProjectModel.validateSlug(data.organizationId, data.slug);
+    if (!isSlugUnique) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Project with this slug already exists in the organization',
+          timestamp: new Date().toISOString()
+        },
+        { status: 409 }
+      );
+    }
+
+    const project = await ProjectModel.create(data);
 
     return NextResponse.json({
       success: true,

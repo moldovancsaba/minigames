@@ -1,0 +1,18 @@
+{
+  "assumptions": {
+    "setSpreadProperties": true
+  },
+  "presets": [
+    ["next/babel", {
+      "preset-env": {
+        "modules": "commonjs",
+        "targets": {
+          "node": "current"
+        }
+      },
+      "transform-runtime": {
+        "regenerator": true
+      }
+    }]
+  ]
+}

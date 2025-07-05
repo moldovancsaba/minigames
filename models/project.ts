@@ -13,9 +13,14 @@ export interface Project {
   visibility: 'public' | 'private';
   status: 'active' | 'archived';
   settings: ProjectSettings;
+  startDate?: Date;
   metadata: ProjectMetadata;
   createdAt: Date;
   updatedAt: Date;
+  organization?: {
+    name: string;
+    description?: string;
+  };
 }
 
 /**

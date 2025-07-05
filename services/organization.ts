@@ -85,11 +85,104 @@ export class OrganizationService {
     return result.value;
   }
 
-  static async deleteOrganization(id: string): Promise<boolean> {
-    const collection = await this.getCollection();
+  static async deleteOrganization(id: string): Promise<{ success: boolean; deletedProjectsCount: number }> {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Starting deletion process for organization ${id}`);
+
+    if (!ObjectId.isValid(id)) {
+      const error = new Error('Invalid organization ID format');
+      console.error(`[${timestamp}] ${error.message}`);
+      throw error;
+    }
+
+    let db;
+    try {
+      const connection = await connectToDatabase();
+      db = connection.db;
+      console.log(`[${timestamp}] Successfully connected to database`);
+    } catch (error) {
+      const dbError = new Error('Database connection failed');
+      console.error(`[${timestamp}] ${dbError.message}:`, 
+        error instanceof Error ? error.message : error,
+        '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
+      );
+      throw dbError;
+    }
+
+    const session = db.client.startSession();
     
-    const result = await collection.deleteOne({ _id: new ObjectId(id) });
-    return result.deletedCount === 1;
+    try {
+      console.log(`[${timestamp}] Initiating database transaction`);
+      session.startTransaction();
+      
+      // Initialize deletion result variable with proper type
+      let projectsDeletion: { deletedCount: number };
+      
+      // Delete all projects associated with the organization
+      try {
+        const projectsCollection = db.collection('projects');
+        console.log(`[${timestamp}] Attempting to delete projects for organization ${id}`);
+        
+        projectsDeletion = await projectsCollection.deleteMany(
+          { organizationId: new ObjectId(id) },
+          { session }
+        );
+        console.log(`[${timestamp}] Successfully deleted ${projectsDeletion.deletedCount} projects for organization ${id}`);
+      } catch (error) {
+        console.error(`[${timestamp}] Failed to delete projects for organization ${id}:`, 
+          error instanceof Error ? error.message : error,
+          '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
+        );
+        await session.abortTransaction();
+        throw new Error('Failed to delete associated projects');
+      }
+      
+      // Delete the organization
+      try {
+        const organizationsCollection = await this.getCollection();
+        console.log(`[${timestamp}] Attempting to delete organization ${id}`);
+        
+        const result = await organizationsCollection.deleteOne(
+          { _id: new ObjectId(id) },
+          { session }
+        );
+        
+        if (result.deletedCount === 1) {
+          console.log(`[${timestamp}] Successfully deleted organization ${id}`);
+        } else {
+          console.error(`[${timestamp}] Organization ${id} not found or could not be deleted`);
+          await session.abortTransaction();
+          const notFoundError = new Error('Organization not found');
+          notFoundError.name = 'NotFoundError';
+          throw notFoundError;
+        }
+        
+        console.log(`[${timestamp}] Committing transaction for organization ${id} deletion`);
+        await session.commitTransaction();
+        console.log(`[${timestamp}] Successfully completed organization ${id} deletion process`);
+        return { 
+          success: true, 
+          deletedProjectsCount: projectsDeletion.deletedCount 
+        };
+      } catch (error) {
+        console.error(`[${timestamp}] Failed to delete organization ${id}:`, 
+          error instanceof Error ? error.message : error,
+          '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
+        );
+        await session.abortTransaction();
+        throw new Error('Failed to delete organization');
+      }
+    } catch (error) {
+      console.error(`[${timestamp}] Critical error during organization ${id} deletion:`, 
+        error instanceof Error ? error.message : error,
+        '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
+      );
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      console.log(`[${timestamp}] Ending database session`);
+      await session.endSession();
+    }
   }
 
   static async listOrganizations(options: {

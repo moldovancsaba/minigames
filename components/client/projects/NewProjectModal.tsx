@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/shared/Button';
-import { TextArea } from '@/components/shared/Form';
+import { TextArea, Select } from '@/components/shared/Form';
 import { Modal } from '@/components/shared/Modal';
+import { useOrganizations } from '@/app/hooks/useOrganizations';
 
 interface NewProjectModalProps {
   open: boolean;
@@ -21,8 +22,10 @@ interface NewProjectModalProps {
 export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedOrgId, setSelectedOrgId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const { organizations, loading: orgsLoading, error: orgsError } = useOrganizations();
 
   // Generate a URL-friendly slug from the name
   const generateSlug = (name: string) => {
@@ -35,6 +38,18 @@ export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Form validation
+    if (!name.trim()) {
+      setError('Project name is required');
+      return;
+    }
+
+    if (!selectedOrgId) {
+      setError('Please select an organization');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -42,7 +57,7 @@ export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProp
         name,
         description,
         slug: generateSlug(name),
-        organizationId: '507f1f77bcf86cd799439011', // TODO: Get from context or prop
+        organizationId: selectedOrgId,
         visibility: 'private',
         status: 'active'
       });
@@ -59,12 +74,29 @@ export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProp
   return (
     <Modal open={open} onClose={onClose} title="Create New Project">
       <form onSubmit={handleSubmit}>
+        <Select
+          id="organization"
+          label="Organization"
+          value={selectedOrgId}
+          onChange={(e) => setSelectedOrgId(e.target.value)}
+          disabled={orgsLoading}
+          error={orgsError || undefined}
+        >
+          <option value="">Select an organization</option>
+          {organizations.map((org) => (
+            <option key={org._id} value={org._id}>
+              {org.name}
+            </option>
+          ))}
+        </Select>
+
         <TextArea
           id="name"
           label="Project Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter project name"
+          error={!name.trim() ? 'Project name is required' : ''}
         />
         <TextArea
           id="description"

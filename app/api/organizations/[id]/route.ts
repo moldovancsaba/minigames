@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { OrganizationService } from '@/services/organization';
+import { ProjectService } from '@/services/project';
 
 /**
  * GET /api/organizations/[id]
@@ -22,6 +23,17 @@ export async function GET(request: NextRequest) {
     }
 
     const organization = await OrganizationService.getOrganization(id);
+    
+    // Fetch associated projects if organization exists
+    if (organization) {
+      const { projects } = await ProjectService.listProjects({ organizationId: id });
+      // Create a new object with projects
+      return NextResponse.json({
+        success: true,
+        data: { ...organization, projects },
+        timestamp: new Date().toISOString()
+      });
+    }
 
     if (!organization) {
       return NextResponse.json(
@@ -131,55 +143,48 @@ export async function PUT(request: NextRequest) {
 
 /**
  * DELETE /api/organizations/[id]
- * Delete an organization
+ * Delete an organization and its related projects
  */
 export async function DELETE(request: NextRequest) {
+  const timestamp = new Date().toISOString();
   const id = request.nextUrl.pathname.split('/').pop();
+  
   try {
-
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization ID is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Organization ID is required',
+        timestamp
+      }, { status: 400 });
     }
 
     const success = await OrganizationService.deleteOrganization(id);
 
     if (!success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: `Organization with ID '${id}' not found`,
+        timestamp
+      }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Organization deleted successfully',
-      timestamp: new Date().toISOString()
+      data: { id },
+      timestamp
     });
-  } catch (error: any) {
+    
+  } catch (error) {
     console.error('Error deleting organization:', {
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to delete organization',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to delete organization',
+      timestamp
+    }, { status: 500 });
   }
 }

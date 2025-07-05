@@ -16,6 +16,7 @@ export interface Organization {
 // Member interface for organization members
 export interface OrganizationMember {
   userId: ObjectId;
+  projects: ObjectId[]; // Array of project IDs associated with the organization
   role: 'owner' | 'admin' | 'member';
   joinedAt: Date;
   invitedBy?: ObjectId;

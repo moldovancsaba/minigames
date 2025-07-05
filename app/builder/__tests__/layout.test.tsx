@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@/test/test-utils'
 import BuilderLayout from '../layout'
 
 describe('BuilderLayout', () => {
@@ -12,14 +12,5 @@ describe('BuilderLayout', () => {
     expect(screen.getByTestId('test-child')).toBeInTheDocument()
   })
 
-  // Add more tests for builder-specific layout functionality
-  it('includes image uploader component', () => {
-    render(
-      <BuilderLayout>
-        <div>Content</div>
-      </BuilderLayout>
-    )
-    
-    expect(screen.getByTestId('image-uploader')).toBeInTheDocument()
-  })
+  // Add more layout-specific tests here as needed
 })

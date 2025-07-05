@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AssociationService } from '@/services/client/associationService';
+import { ProjectService } from '@/services/client/projectService';
 
 
 export interface Project {
@@ -42,16 +44,18 @@ export function useProjects(organizationId?: string) {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const url = organizationId 
-          ? `/api/organizations/${organizationId}/projects`
-          : '/api/projects';
+        let projectData;
+        if (organizationId) {
+          const { projects: orgProjects } = await AssociationService.listOrganizationProjects(organizationId);
+          projectData = orgProjects;
+        } else {
+          const response = await fetch('/api/projects');
+          if (!response.ok) throw new Error('Failed to fetch projects');
+          const { data } = await response.json();
+          projectData = data;
+        }
         
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch projects');
-        
-        const { data } = await response.json();
-        const projectData = Array.isArray(data) ? data : data?.projects || [];
-        setProjects(projectData.map((project: Omit<Project, '_id'> & { _id: string | { toString(): string } }) => ({
+        setProjects(projectData.map((project: Project) => ({
           ...project,
           _id: project._id.toString()
         })));

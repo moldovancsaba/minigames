@@ -5,31 +5,51 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { useProjects } from '@/app/hooks/useProjects';
 import { useCurrentOrganization } from '@/app/hooks/useCurrentOrganization';
 import { NewProjectModal } from '@/components/client/projects/NewProjectModal';
+import { DeleteProjectButton } from '@/components/client/projects/DeleteProjectButton';
 import { Button } from '@/components/shared/Button';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { Project } from '@/app/hooks/useProjects';
 
 interface ProjectRowProps {
   project: Project;
+  organizationName: string;
 }
 
-const ProjectRow = ({ project }: ProjectRowProps) => (
-  <tr>
-    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-      {project.name}
-    </td>
-    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-      {project.slug}
-    </td>
-    <td className="px-3 py-4 text-sm text-gray-500">
-      {project.description}
-    </td>
-    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-      <button className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
-      <button className="text-red-600 hover:text-red-900">Delete</button>
-    </td>
-  </tr>
-);
+const ProjectRow = ({ project, organizationName }: ProjectRowProps) => {
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking delete button
+    if (e.target instanceof HTMLElement && e.target.closest('button')) {
+      e.stopPropagation();
+      return;
+    }
+    window.location.href = `/projects/${project._id}`;
+  };
+
+  return (
+    <tr className="hover:bg-gray-50 cursor-pointer" onClick={handleRowClick}>
+      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+        <span className="text-indigo-600 hover:text-indigo-900">{project.name}</span>
+      </td>
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+        {organizationName}
+      </td>
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+        {project.slug}
+      </td>
+      <td className="px-3 py-4 text-sm text-gray-500">
+        {project.description}
+      </td>
+      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+        <button className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+        <DeleteProjectButton
+          projectId={project._id}
+          projectName={project.name}
+          organizationId={project.organizationId}
+        />
+      </td>
+    </tr>
+  );
+};
 
 const LoadingTable = () => {
   // Use a proper key prefix to avoid potential key conflicts
@@ -49,6 +69,32 @@ export default function ProjectsPage() {
   const { projects, loading: projectsLoading, error: projectsError, setProjects } = useProjects();
   const { organization, loading: orgLoading, error: orgError } = useCurrentOrganization();
   const [showNewModal, setShowNewModal] = useState(false);
+  const [organizationNames, setOrganizationNames] = useState<Record<string, string>>({});
+
+  // Fetch organization names for all projects
+  React.useEffect(() => {
+    const fetchOrganizationNames = async () => {
+      const names: Record<string, string> = {};
+      const uniqueOrgIds = [...new Set(projects?.map(p => p.organizationId) || [])];
+
+      for (const orgId of uniqueOrgIds) {
+        try {
+          const response = await fetch(`/api/organizations/${orgId}`);
+          if (response.ok) {
+            const { data } = await response.json();
+            names[orgId] = data.name;
+          }
+        } catch (error) {
+          console.error(`Failed to fetch organization name for ID ${orgId}:`, error);
+        }
+      }
+      setOrganizationNames(names);
+    };
+
+    if (projects?.length > 0) {
+      fetchOrganizationNames();
+    }
+  }, [projects]);
 
   const loading = projectsLoading || orgLoading;
   const error = projectsError || orgError;
@@ -126,7 +172,8 @@ export default function ProjectsPage() {
                 <table className="min-w-full divide-y divide-gray-300">
                   <thead>
                     <tr>
-                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
+<th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Organization</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Slug</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
                       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
@@ -142,7 +189,11 @@ export default function ProjectsPage() {
                         </td>
                       </tr>
                     ) : projects.map((project) => (
-                      <ProjectRow key={project._id} project={project} />
+<ProjectRow
+  key={project._id}
+  project={project}
+  organizationName={organizationNames[project.organizationId] || 'Unknown Organization'}
+/>
                     ))}
                     </tbody>
                 </table>
