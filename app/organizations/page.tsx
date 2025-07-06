@@ -95,23 +95,15 @@ export default function OrganizationsPage() {
 
 const handleCreateOrganization = async (data: { name: string; slug?: string; description?: string }) => {
     try {
-    // Get current user's ID
-    const userResponse = await fetch('/api/me');
-    if (!userResponse.ok) {
-      throw new Error('Failed to get current user');
-    }
-    const user = await userResponse.json();
-    
-    const newOrg = await OrganizationService.createOrganization({
-      ...data,
-      creatorId: user.data._id
-    });
-    if (newOrg && newOrg._id) {
-      setOrganizations(prev => [...prev, newOrg]);
-      setShowNewModal(false);
-    } else {
-      throw new Error('Invalid organization data received');
-    }
+      const newOrg = await OrganizationService.createOrganization({
+        ...data,
+      });
+      if (newOrg && newOrg._id) {
+        setOrganizations(prev => [...prev, newOrg]);
+        setShowNewModal(false);
+      } else {
+        throw new Error('Invalid organization data received');
+      }
     } catch (error) {
       console.error('Error creating organization:', error);
       throw error;

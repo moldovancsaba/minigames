@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { EditProjectButton } from '@/components/client/projects/EditProjectButton';
 import { DeleteProjectButton } from '@/components/client/projects/DeleteProjectButton';
 
-import type { Project } from '@/app/types/index';
+import type { ProjectType } from '@/app/types/index';
 
 interface ProjectPageProps {
-  project: Project;
+  project: ProjectType;
   organization: {
     _id: string;
     name: string;

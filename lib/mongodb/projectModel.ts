@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db/init';
-import type { Project } from '@/app/types/index';
+import { ProjectType } from '@/app/types/index';
 
 const projectSchema = new mongoose.Schema({
   name: {
@@ -90,10 +90,10 @@ const projectSchema = new mongoose.Schema({
 });
 
 // Create the model if it doesn't exist
-const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
+export const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
 
 // Helper function to serialize project data
-export const serializeProject = (project: any): Project => {
+export const serializeProject = (project: any): ProjectType => {
   return {
     ...project.toObject(),
     _id: project._id.toString(),
@@ -114,7 +114,7 @@ export class ProjectModel {
     await dbConnect();
   }
 
-  static async create(data: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
+  static async create(data: Omit<ProjectType, '_id' | 'createdAt' | 'updatedAt'>): Promise<ProjectType> {
     try {
       console.log('Connecting to MongoDB...');
       await this.connect();
@@ -128,13 +128,13 @@ export class ProjectModel {
     }
   }
 
-  static async findById(id: string): Promise<Project | null> {
+  static async findById(id: string): Promise<ProjectType | null> {
     await this.connect();
     const project = await Project.findById(id);
     return project ? serializeProject(project) : null;
   }
 
-  static async update(id: string, data: Partial<Project>): Promise<Project | null> {
+  static async update(id: string, data: Partial<ProjectType>): Promise<ProjectType | null> {
     await this.connect();
     const project = await Project.findByIdAndUpdate(id, data, { new: true });
     return project ? serializeProject(project) : null;
@@ -146,7 +146,7 @@ export class ProjectModel {
     return !!result;
   }
 
-  static async findByOrganization(organizationId: string): Promise<Project[]> {
+  static async findByOrganization(organizationId: string): Promise<ProjectType[]> {
     await this.connect();
     const projects = await Project.find({ organizationId });
     return projects.map(serializeProject);

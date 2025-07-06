@@ -1,8 +1,8 @@
-import type { Project } from '@/app/types/index';
+import type { ProjectType } from '@/app/types/index';
 import { CreateProjectInput } from '../projectService';
 
 export class ProjectApi {
-  static async getProject(id: string): Promise<Project | null> {
+  static async getProject(id: string): Promise<ProjectType | null> {
     try {
       const response = await fetch(`/api/projects/${id}`);
       if (!response.ok) {
@@ -17,7 +17,7 @@ export class ProjectApi {
     }
   }
 
-  static async createProject(data: CreateProjectInput): Promise<Project | null> {
+  static async createProject(data: CreateProjectInput): Promise<ProjectType | null> {
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
@@ -40,7 +40,7 @@ export class ProjectApi {
     }
   }
 
-  static async updateProject(id: string, data: Partial<Project>): Promise<Project | null> {
+  static async updateProject(id: string, data: Partial<ProjectType>): Promise<ProjectType | null> {
     try {
       const response = await fetch(`/api/projects/${id}`, {
         method: 'PUT',

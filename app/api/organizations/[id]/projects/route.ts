@@ -1,14 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AssociationService } from '@/services/association';
+import {
+  publicApiMiddleware,
+  formatApiResponse,
+  applyCorsHeaders,
+  createRequestMetadata,
+  checkRateLimit
+} from '@/middleware/api';
 
 /**
  * GET /api/organizations/[id]/projects
  * List all projects for an organization with filtering and pagination
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) {
+    return NextResponse.json(middlewareResponse);
+  }
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
-    const organizationId = request.nextUrl.pathname.split('/')[3];
-    const searchParams = request.nextUrl.searchParams;
+const { searchParams } = request.nextUrl;
+    const organizationId = searchParams.get('id');
+
+    if (!organizationId) {
+      return NextResponse.json(
+        applyCorsHeaders(
+          formatApiResponse(
+            null,
+            'Organization ID is required',
+            400,
+            rateLimitInfo
+          )
+        )
+      );
+    }
 
     // Parse and validate query parameters
     const options = {
@@ -23,23 +53,27 @@ export async function GET(request: NextRequest) {
     // Validate numeric parameters
     if (options.page !== undefined && (isNaN(options.page) || options.page < 1)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid page parameter',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+        applyCorsHeaders(
+          formatApiResponse(
+            null,
+            'Invalid page parameter',
+            400,
+            rateLimitInfo
+          )
+        )
       );
     }
 
     if (options.limit !== undefined && (isNaN(options.limit) || options.limit < 1)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid limit parameter',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+        applyCorsHeaders(
+          formatApiResponse(
+            null,
+            'Invalid limit parameter',
+            400,
+            rateLimitInfo
+          )
+        )
       );
     }
 
@@ -48,46 +82,68 @@ export async function GET(request: NextRequest) {
       options
     );
 
-    return NextResponse.json({
-      success: true,
-      data: result,
-      timestamp: new Date().toISOString()
-    });
+    return NextResponse.json(
+      applyCorsHeaders(
+        formatApiResponse(result, null, 200, rateLimitInfo)
+      )
+    );
   } catch (error: any) {
-    console.error('Error listing organization projects:', {
-      error: error.message,
+    console.error('Failed to list organization projects:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'list_organization_projects'
     });
 
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to list organization projects',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+      applyCorsHeaders(
+        formatApiResponse(
+          null,
+          error.message || 'Failed to list organization projects',
+          500,
+          rateLimitInfo
+        )
+      )
     );
+    }
   }
-}
 
 /**
  * PATCH /api/organizations/[id]/projects
  * Bulk update projects in an organization (archive all, update visibility)
  */
 export async function PATCH(request: NextRequest) {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
-    const organizationId = request.nextUrl.pathname.split('/')[3];
+    const organizationId = request.nextUrl.pathname.split('/')[3]; // Extract ID from /api/organizations/[id]/projects
+
+    if (!organizationId) {
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization ID is required',
+          400,
+          rateLimitInfo
+        )
+      );
+    }
     const data = await request.json();
     
     if (!data.action) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Action is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Action is required',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
@@ -102,13 +158,13 @@ export async function PATCH(request: NextRequest) {
 
       case 'update_visibility':
         if (!data.visibility || !['public', 'private'].includes(data.visibility)) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'Invalid visibility value',
-              timestamp: new Date().toISOString()
-            },
-            { status: 400 }
+          return applyCorsHeaders(
+            formatApiResponse(
+              null,
+              'Invalid visibility value',
+              400,
+              rateLimitInfo
+            )
           );
         }
         result = await AssociationService.updateOrganizationProjectsVisibility(
@@ -118,35 +174,39 @@ export async function PATCH(request: NextRequest) {
         break;
 
       default:
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Invalid action',
-            timestamp: new Date().toISOString()
-          },
-          { status: 400 }
+        return applyCorsHeaders(
+          formatApiResponse(
+            null,
+            'Invalid action',
+            400,
+            rateLimitInfo
+          )
         );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: { modifiedCount: result },
-      timestamp: new Date().toISOString()
-    });
+    return applyCorsHeaders(
+      formatApiResponse(
+        { modifiedCount: result },
+        null,
+        200,
+        rateLimitInfo
+      )
+    );
   } catch (error: any) {
-    console.error('Error updating organization projects:', {
-      error: error.message,
+    console.error('Failed to update organization projects:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'update_organization_projects'
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to update organization projects',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to update organization projects',
+        500,
+        rateLimitInfo
+      )
     );
   }
 }

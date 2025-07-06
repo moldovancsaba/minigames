@@ -16,7 +16,7 @@ export class OrganizationApi {
     }
   }
 
-  static async createOrganization(data: { name: string; slug?: string; description?: string; creatorId: string }): Promise<Organization | null> {
+  static async createOrganization(data: { name: string; slug?: string; description?: string }): Promise<Organization | null> {
     try {
       const response = await fetch('/api/organizations', {
         method: 'POST',

@@ -1,4 +1,4 @@
-import type { Project } from '@/app/types/index';
+import type { ProjectType } from '@/app/types/index';
 import { AssociationClient } from './associationClient';
 
 export interface CreateProjectInput {
@@ -11,7 +11,7 @@ export interface CreateProjectInput {
 }
 
 export class ProjectService {
-  static async getProject(id: string): Promise<Project | null> {
+  static async getProject(id: string): Promise<ProjectType | null> {
     try {
       const response = await fetch(`/api/projects/${id}`);
       if (!response.ok) {
@@ -26,7 +26,7 @@ export class ProjectService {
     }
   }
 
-  static async createProject(data: CreateProjectInput): Promise<Project | null> {
+  static async createProject(data: CreateProjectInput): Promise<ProjectType | null> {
     try {
       // Validate project slug uniqueness within the organization
       const isSlugUnique = await AssociationClient.validateProjectSlug(
@@ -58,7 +58,7 @@ export class ProjectService {
     }
   }
 
-  static async updateProject(id: string, data: Partial<Project>): Promise<Project | null> {
+  static async updateProject(id: string, data: Partial<ProjectType>): Promise<ProjectType | null> {
     try {
       // If slug is being updated, validate its uniqueness
       if (data.slug && data.organizationId) {

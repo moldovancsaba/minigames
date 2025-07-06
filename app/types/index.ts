@@ -5,7 +5,7 @@ export interface Organization {
   description?: string;
 }
 
-export interface Project {
+export interface ProjectType {
   _id: string;
   name: string;
   slug: string;

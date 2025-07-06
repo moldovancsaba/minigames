@@ -1,5 +1,13 @@
 # Release Notes
 
+## [v6.1.2] — 2025-07-16T16:00:00.000Z
+
+### Security
+- Fixed critical security vulnerabilities in dependencies
+- Updated package dependencies to latest secure versions
+- Enhanced input validation and sanitization
+- Improved security measures implementation
+
 ## [v6.1.1] — 2025-07-05T21:30:00.000Z
 
 ### Patch

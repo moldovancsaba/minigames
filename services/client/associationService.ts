@@ -1,4 +1,4 @@
-import type { Project } from '@/app/types/index';
+import type { ProjectType } from '@/app/types/index';
 import type { Organization } from '@/services/organizationService';
 
 interface ListProjectsOptions {
@@ -17,7 +17,7 @@ export class AssociationService {
   static async listOrganizationProjects(
     organizationId: string,
     options: ListProjectsOptions = {}
-  ): Promise<{ projects: Project[]; total: number }> {
+  ): Promise<{ projects: ProjectType[]; total: number }> {
     try {
       const queryParams = new URLSearchParams();
       for (const [key, value] of Object.entries(options)) {

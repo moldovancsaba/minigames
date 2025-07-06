@@ -1,42 +1,94 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { OrganizationModel } from '@/lib/mongodb/organizationModel';
+import {
+  publicApiMiddleware,
+  formatApiResponse,
+  applyCorsHeaders,
+  createRequestMetadata,
+  checkRateLimit
+} from '@/middleware/api';
 
 // GET /api/organizations
 export async function GET(request: NextRequest) {
-  const organizations = await OrganizationModel.findAll();
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
 
-  return NextResponse.json({
-    success: true,
-    data: organizations,
-    timestamp: new Date().toISOString()
-  });
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
+  try {
+    const organizations = await OrganizationModel.findAll();
+    return applyCorsHeaders(
+      formatApiResponse(organizations, null, 200, rateLimitInfo)
+    );
+  } catch (error: any) {
+    console.error('Failed to fetch organizations:', error);
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to fetch organizations',
+        500,
+        rateLimitInfo
+      )
+    );
+  }
 }
 
 // POST /api/organizations
 export async function POST(request: NextRequest) {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
     const data = await request.json();
+    
+    if (!data.name) {
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization name is required',
+          400,
+          rateLimitInfo
+        )
+      );
+    }
 
-    // Create organization
+    // Auto-generate slug if not provided
+    if (!data.slug) {
+      data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+
+    // Create organization with defaults
     const organization = await OrganizationModel.create({
       name: data.name,
       slug: data.slug,
-      description: data.description
+      description: data.description || '',
+      status: 'active',
+      settings: {
+        allowPublicProjects: true,
+        defaultProjectVisibility: 'public'
+      }
     });
 
-    return NextResponse.json({
-      success: true,
-      data: organization,
-      timestamp: new Date().toISOString()
-    }, { status: 201 });
+    return applyCorsHeaders(
+      formatApiResponse(organization, null, 201, rateLimitInfo)
+    );
   } catch (error: any) {
     console.error('Organization creation error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to create organization',
-      timestamp: new Date().toISOString()
-    }, {
-      status: error.code === 11000 ? 409 : 500
-    });
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to create organization',
+        500,
+        rateLimitInfo
+      )
+    );
   }
 }

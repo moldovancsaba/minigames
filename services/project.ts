@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
-import { Project, ProjectSettings, ProjectMetadata } from '@/models/project';
+import { ProjectType, ProjectSettings, ProjectMetadata } from '@/models/project';
 
 export class ProjectService {
   private static async getCollection() {
@@ -14,8 +14,8 @@ export class ProjectService {
    * @returns Newly created project
    */
   static async createProject(
-    data: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>
-  ): Promise<Project> {
+    data: Omit<ProjectType, '_id' | 'createdAt' | 'updatedAt'>
+  ): Promise<ProjectType> {
     const collection = await this.getCollection();
 
     // Validate slug uniqueness within the organization
@@ -29,7 +29,7 @@ export class ProjectService {
     }
 
     const now = new Date();
-    const project: Project = {
+    const project: ProjectType = {
       ...data,
       createdAt: now,
       updatedAt: now
@@ -48,7 +48,7 @@ export class ProjectService {
   static async getProject(
     identifier: string,
     organizationId?: string
-  ): Promise<Project | null> {
+  ): Promise<ProjectType | null> {
     const collection = await this.getCollection();
 
     const query = ObjectId.isValid(identifier)
@@ -68,8 +68,8 @@ export class ProjectService {
    */
   static async updateProject(
     id: string,
-    data: Partial<Omit<Project, '_id' | 'createdAt' | 'updatedAt'>>
-  ): Promise<Project | null> {
+    data: Partial<Omit<ProjectType, '_id' | 'createdAt' | 'updatedAt'>>
+  ): Promise<ProjectType | null> {
     const collection = await this.getCollection();
 
     // Validate project exists
@@ -123,12 +123,12 @@ export class ProjectService {
    */
   static async listProjects(options: {
     organizationId?: string;
-    visibility?: Project['visibility'];
-    status?: Project['status'];
+    visibility?: ProjectType['visibility'];
+    status?: ProjectType['status'];
     page?: number;
     limit?: number;
     tags?: string[];
-  } = {}): Promise<{ projects: Project[]; total: number }> {
+  } = {}): Promise<{ projects: ProjectType[]; total: number }> {
     const collection = await this.getCollection();
     const {
       organizationId,
@@ -178,7 +178,7 @@ export class ProjectService {
   static async updateProjectSettings(
     id: string,
     settings: Partial<ProjectSettings>
-  ): Promise<Project | null> {
+  ): Promise<ProjectType | null> {
     const collection = await this.getCollection();
 
     const updateData = {
@@ -204,7 +204,7 @@ export class ProjectService {
   static async updateProjectMetadata(
     id: string,
     metadata: Partial<ProjectMetadata>
-  ): Promise<Project | null> {
+  ): Promise<ProjectType | null> {
     const collection = await this.getCollection();
 
     const updateData = {

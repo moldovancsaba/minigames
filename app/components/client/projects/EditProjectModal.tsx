@@ -2,7 +2,7 @@
 
 import { Modal } from '@/components/shared/Modal';
 import ProjectForm from './ProjectForm';
-import { Project } from '@/models/project';
+import { ProjectType } from '@/app/types/index';
 
 interface EditProjectModalProps {
   open: boolean;
@@ -14,7 +14,7 @@ interface EditProjectModalProps {
     status: 'active' | 'archived';
     visibility: 'public' | 'private';
   }) => Promise<void>;
-  project: Project;
+  project: ProjectType;
 }
 
 export function EditProjectModal({

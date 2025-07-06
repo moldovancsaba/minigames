@@ -1,72 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProjectService } from '@/services/project';
 import { OrganizationService } from '@/services/organization';
-import { validateIdParam } from '@/middleware/validation';
-import type { RouteSegment } from '@/app/types/route';
+import {
+  publicApiMiddleware,
+  formatApiResponse,
+  applyCorsHeaders,
+  createRequestMetadata,
+  checkRateLimit
+} from '@/middleware/api';
 
 /**
  * GET /api/projects/[id]
  * Retrieve a single project by ID
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) {
+    return NextResponse.json(middlewareResponse);
+  }
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
-    const id = request.nextUrl.pathname.split('/').pop();
+const { searchParams } = request.nextUrl;
+    const id = searchParams.get('id');
     const organizationId = request.nextUrl.searchParams.get('organizationId');
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project ID is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
-      );
+return NextResponse.json(applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project ID is required',
+          400,
+          rateLimitInfo
+        )
+      ));
     }
 
     const project = await ProjectService.getProject(id, organizationId || undefined);
-    
-    // Fetch associated organization if project exists
-    if (project) {
-      const organization = await OrganizationService.getOrganization(project.organizationId.toString());
-      // Create a new object with organization
-      return NextResponse.json({
-        success: true,
-        data: { ...project, organization },
-        timestamp: new Date().toISOString()
-      });
-    }
-
     if (!project) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
-      );
+return NextResponse.json(applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project not found',
+          404,
+          rateLimitInfo
+        )
+      ));
     }
 
-    return NextResponse.json({
-      success: true,
-      data: project,
-      timestamp: new Date().toISOString()
-    });
+    // Fetch associated organization if project exists
+    const organization = await OrganizationService.getOrganization(project.organizationId.toString());
+    
+    return NextResponse.json(
+      applyCorsHeaders(
+        formatApiResponse(
+          { ...project, organization },
+          null,
+          200,
+          rateLimitInfo
+        )
+      )
+    );
   } catch (error: any) {
-    console.error('Error fetching project:', {
-      error: error.message,
+    console.error('Failed to fetch project:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'get_project'
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch project',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+return NextResponse.json(applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to fetch project',
+        500,
+        rateLimitInfo
+      )
+ )
     );
   }
 }
@@ -76,18 +90,26 @@ export async function GET(request: NextRequest) {
  * Update a project
  */
 export async function PUT(request: NextRequest) {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
-    const id = request.nextUrl.pathname.split('/').pop();
+    const id = request.nextUrl.pathname.split('/')[3]; // Extract ID from /api/projects/[id]
     const updateData = await request.json();
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project ID is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project ID is required',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
@@ -99,46 +121,45 @@ export async function PUT(request: NextRequest) {
     const project = await ProjectService.updateProject(id, updateData);
 
     if (!project) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project not found',
+          404,
+          rateLimitInfo
+        )
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: project,
-      timestamp: new Date().toISOString()
-    });
+    return applyCorsHeaders(
+      formatApiResponse(project, null, 200, rateLimitInfo)
+    );
   } catch (error: any) {
-    console.error('Error updating project:', {
-      error: error.message,
+    console.error('Failed to update project:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'update_project'
     });
 
     if (error.message === 'Project with this slug already exists in the organization') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-          timestamp: new Date().toISOString()
-        },
-        { status: 409 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          error.message,
+          409,
+          rateLimitInfo
+        )
       );
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to update project',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to update project',
+        500,
+        rateLimitInfo
+      )
     );
   }
 }
@@ -147,59 +168,65 @@ export async function PUT(request: NextRequest) {
  * DELETE /api/projects/[id]
  * Delete a project
  */
-
-
 export async function DELETE(request: NextRequest) {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
-    const id = request.nextUrl.pathname.split('/').pop();
-    const validationError = validateIdParam(id);
-    if (validationError) {
-      return validationError;
-    }
+    const id = request.nextUrl.pathname.split('/')[3]; // Extract ID from /api/projects/[id]
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project ID is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project ID is required',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
     const success = await ProjectService.deleteProject(id);
 
     if (!success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project not found',
+          404,
+          rateLimitInfo
+        )
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Project deleted successfully',
-      timestamp: new Date().toISOString()
-    });
+    return applyCorsHeaders(
+      formatApiResponse(
+        { message: 'Project deleted successfully' },
+        null,
+        200,
+        rateLimitInfo
+      )
+    );
   } catch (error: any) {
-    console.error('Error deleting project:', {
-      error: error.message,
+    console.error('Failed to delete project:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'delete_project'
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to delete project',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to delete project',
+        500,
+        rateLimitInfo
+      )
     );
   }
 }

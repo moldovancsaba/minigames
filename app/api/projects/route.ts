@@ -1,13 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { ProjectModel } from '@/lib/mongodb/projectModel';
 import { OrganizationModel } from '@/lib/mongodb/organizationModel';
 import { validateObjectId } from '@/middleware/validation';
+import {
+  publicApiMiddleware,
+  formatApiResponse,
+  applyCorsHeaders,
+  createRequestMetadata,
+  checkRateLimit
+} from '@/middleware/api';
 
 /**
  * GET /api/projects
  * List all projects with filtering and pagination
  */
 export async function GET(request: NextRequest) {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
     const searchParams = request.nextUrl.searchParams;
     
@@ -23,24 +38,24 @@ export async function GET(request: NextRequest) {
 
     // Validate numeric parameters
     if (options.page !== undefined && isNaN(options.page)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid page parameter',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Invalid page parameter',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
     if (options.limit !== undefined && isNaN(options.limit)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid limit parameter',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Invalid limit parameter',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
@@ -56,25 +71,24 @@ export async function GET(request: NextRequest) {
       limit: options.limit || 10
     };
 
-    return NextResponse.json({
-      success: true,
-      data: result,
-      timestamp: new Date().toISOString()
-    });
+    return applyCorsHeaders(
+      formatApiResponse(result, null, 200, rateLimitInfo)
+    );
   } catch (error: any) {
-    console.error('Error listing projects:', {
-      error: error.message,
+    console.error('Failed to list projects:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'list_projects'
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to list projects',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to list projects',
+        500,
+        rateLimitInfo
+      )
     );
   }
 }
@@ -84,44 +98,52 @@ export async function GET(request: NextRequest) {
  * Create a new project
  */
 export async function POST(request: NextRequest) {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
     const data = await request.json();
-    console.log('Received project data:', data);
 
     // Validate data directly since we already have it
     const { name, slug, organizationId, visibility, status } = data;
     if (!name || !slug || !organizationId || !visibility || !status) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required fields',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Missing required fields',
+          400,
+          rateLimitInfo
+        )
       );
     }
+
     // Validate ObjectId format
     if (!validateObjectId(organizationId)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid organizationId format',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Invalid organizationId format',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
     // Validate slug format
     const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
     if (!slugRegex.test(slug)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Invalid slug format. Must contain only lowercase letters, numbers, and hyphens',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Invalid slug format. Must contain only lowercase letters, numbers, and hyphens',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
@@ -154,61 +176,60 @@ export async function POST(request: NextRequest) {
     // Verify organization exists
     const organization = await OrganizationModel.findById(data.organizationId);
     if (!organization) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization not found',
+          404,
+          rateLimitInfo
+        )
       );
     }
 
     // Validate slug uniqueness within organization
     const isSlugUnique = await ProjectModel.validateSlug(data.organizationId, data.slug);
     if (!isSlugUnique) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Project with this slug already exists in the organization',
-          timestamp: new Date().toISOString()
-        },
-        { status: 409 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Project with this slug already exists in the organization',
+          409,
+          rateLimitInfo
+        )
       );
     }
 
     const project = await ProjectModel.create(data);
 
-    return NextResponse.json({
-      success: true,
-      data: project,
-      timestamp: new Date().toISOString()
-    }, { status: 201 });
+    return applyCorsHeaders(
+      formatApiResponse(project, null, 201, rateLimitInfo)
+    );
   } catch (error: any) {
-    console.error('Error creating project:', {
-      error: error.message,
+    console.error('Failed to create project:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'create_project'
     });
 
     if (error.message === 'Project with this slug already exists in the organization') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-          timestamp: new Date().toISOString()
-        },
-        { status: 409 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          error.message,
+          409,
+          rateLimitInfo
+        )
       );
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to create project',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to create project',
+        500,
+        rateLimitInfo
+      )
     );
   }
 }

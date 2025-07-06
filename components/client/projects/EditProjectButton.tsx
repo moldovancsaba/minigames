@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Project } from '@/app/types/index';
+import { ProjectType } from '@/app/types/index';
 import { Button } from '@/components/shared/Button';
 
 interface EditProjectButtonProps {
-  project: Project;
+  project: ProjectType;
 }
 
 export function EditProjectButton({ project }: EditProjectButtonProps) {

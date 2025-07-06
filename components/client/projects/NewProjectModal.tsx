@@ -20,12 +20,18 @@ interface NewProjectModalProps {
 }
 
 export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProps) {
+  const { organizations, loading: orgsLoading } = useOrganizations();
+  const [selectedOrgId, setSelectedOrgId] = useState('');
+
+  useEffect(() => {
+    if (organizations?.length === 1) {
+      setSelectedOrgId(organizations[0]._id);
+    }
+  }, [organizations]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedOrgId, setSelectedOrgId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const { organizations, loading: orgsLoading, error: orgsError } = useOrganizations();
 
   // Generate a URL-friendly slug from the name
   const generateSlug = (name: string) => {
@@ -80,10 +86,9 @@ export function NewProjectModal({ open, onClose, onSubmit }: NewProjectModalProp
           value={selectedOrgId}
           onChange={(e) => setSelectedOrgId(e.target.value)}
           disabled={orgsLoading}
-          error={orgsError || undefined}
         >
           <option value="">Select an organization</option>
-          {organizations.map((org) => (
+          {organizations?.map((org) => (
             <option key={org._id} value={org._id}>
               {org.name}
             </option>

@@ -8,27 +8,34 @@ export class OrganizationService {
     return db.collection('organizations');
   }
 
+  private static async getProjectsCollection() {
+    const { db } = await connectToDatabase();
+    return db.collection('projects');
+  }
+
   static async createOrganization(data: Omit<Organization, '_id' | 'createdAt' | 'updatedAt'>): Promise<Organization> {
     const collection = await this.getCollection();
     
-    // Validate slug uniqueness
-    const existingOrg = await collection.findOne({ slug: data.slug });
-    if (existingOrg) {
-      throw new Error('Organization with this slug already exists');
-    }
-
     const now = new Date();
+    const userId = new ObjectId();
     
-    // Convert string IDs to ObjectIds and ensure proper date objects
-    const members = data.members?.map(member => ({
-      ...member,
-      userId: new ObjectId(member.userId.toString()),
-      joinedAt: new Date(member.joinedAt)
-    })) || [];
-
     const organization: Organization = {
-      ...data,
-      members,
+      name: data.name,
+      slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      description: data.description,
+      status: data.status || 'active',
+      members: [
+        {
+          userId,
+          role: 'owner',
+          joinedAt: now,
+          projects: []
+        }
+      ],
+      settings: {
+        allowPublicProjects: true,
+        defaultProjectVisibility: 'public'
+      },
       createdAt: now,
       updatedAt: now
     };
@@ -86,103 +93,37 @@ export class OrganizationService {
   }
 
   static async deleteOrganization(id: string): Promise<{ success: boolean; deletedProjectsCount: number }> {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] Starting deletion process for organization ${id}`);
-
     if (!ObjectId.isValid(id)) {
-      const error = new Error('Invalid organization ID format');
-      console.error(`[${timestamp}] ${error.message}`);
-      throw error;
+      throw new Error('Invalid organization ID format');
     }
 
-    let db;
-    try {
-      const connection = await connectToDatabase();
-      db = connection.db;
-      console.log(`[${timestamp}] Successfully connected to database`);
-    } catch (error) {
-      const dbError = new Error('Database connection failed');
-      console.error(`[${timestamp}] ${dbError.message}:`, 
-        error instanceof Error ? error.message : error,
-        '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
-      );
-      throw dbError;
-    }
-
-    const session = db.client.startSession();
+    const collection = await this.getCollection();
+    const projectsCollection = await this.getProjectsCollection();
     
-    try {
-      console.log(`[${timestamp}] Initiating database transaction`);
-      session.startTransaction();
-      
-      // Initialize deletion result variable with proper type
-      let projectsDeletion: { deletedCount: number };
-      
-      // Delete all projects associated with the organization
-      try {
-        const projectsCollection = db.collection('projects');
-        console.log(`[${timestamp}] Attempting to delete projects for organization ${id}`);
-        
-        projectsDeletion = await projectsCollection.deleteMany(
-          { organizationId: new ObjectId(id) },
-          { session }
-        );
-        console.log(`[${timestamp}] Successfully deleted ${projectsDeletion.deletedCount} projects for organization ${id}`);
-      } catch (error) {
-        console.error(`[${timestamp}] Failed to delete projects for organization ${id}:`, 
-          error instanceof Error ? error.message : error,
-          '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
-        );
-        await session.abortTransaction();
-        throw new Error('Failed to delete associated projects');
-      }
-      
-      // Delete the organization
-      try {
-        const organizationsCollection = await this.getCollection();
-        console.log(`[${timestamp}] Attempting to delete organization ${id}`);
-        
-        const result = await organizationsCollection.deleteOne(
-          { _id: new ObjectId(id) },
-          { session }
-        );
-        
-        if (result.deletedCount === 1) {
-          console.log(`[${timestamp}] Successfully deleted organization ${id}`);
-        } else {
-          console.error(`[${timestamp}] Organization ${id} not found or could not be deleted`);
-          await session.abortTransaction();
-          const notFoundError = new Error('Organization not found');
-          notFoundError.name = 'NotFoundError';
-          throw notFoundError;
-        }
-        
-        console.log(`[${timestamp}] Committing transaction for organization ${id} deletion`);
-        await session.commitTransaction();
-        console.log(`[${timestamp}] Successfully completed organization ${id} deletion process`);
-        return { 
-          success: true, 
-          deletedProjectsCount: projectsDeletion.deletedCount 
-        };
-      } catch (error) {
-        console.error(`[${timestamp}] Failed to delete organization ${id}:`, 
-          error instanceof Error ? error.message : error,
-          '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
-        );
-        await session.abortTransaction();
-        throw new Error('Failed to delete organization');
-      }
-    } catch (error) {
-      console.error(`[${timestamp}] Critical error during organization ${id} deletion:`, 
-        error instanceof Error ? error.message : error,
-        '\nStack trace:', error instanceof Error ? error.stack : 'No stack trace available'
-      );
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      console.log(`[${timestamp}] Ending database session`);
-      await session.endSession();
+    // First check if organization exists
+    const organization = await collection.findOne({ _id: new ObjectId(id) });
+    if (!organization) {
+      throw new Error('Organization not found');
     }
+
+    // Delete all projects associated with the organization
+    const projectsDeletion = await projectsCollection.deleteMany({ 
+      organizationId: new ObjectId(id) 
+    });
+
+    // Delete the organization
+    const deleteResult = await collection.deleteOne({ 
+      _id: new ObjectId(id) 
+    });
+
+    if (deleteResult.deletedCount !== 1) {
+      throw new Error('Failed to delete organization');
+    }
+
+    return { 
+      success: true,
+      deletedProjectsCount: projectsDeletion.deletedCount 
+    };
   }
 
   static async listOrganizations(options: {

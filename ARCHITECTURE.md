@@ -178,6 +178,36 @@ GET    /api/organizations/[id]/projects/stats
 POST   /api/projects/[id]/transfer
 ```
 
+#### API Response Module
+- **Location**: `/lib/api/response.ts`
+- **Role**: Standardizes API response formatting across all endpoints
+- **Dependencies**: None
+- **Status**: Active
+
+##### Implementation Details
+```typescript
+type ApiResponse<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp: string; // ISO 8601 with milliseconds
+}
+
+function formatApiResponse<T>(
+  data: T | null,
+  error?: string,
+  statusCode: number = 200,
+  rateLimitInfo?: RateLimitInfo
+): ApiResponse<T>
+```
+
+##### Features
+- Consistent response structure across all endpoints
+- ISO 8601 timestamp with millisecond precision
+- Type-safe response formatting
+- Support for rate limiting information
+- Proper error handling and status codes
+
 #### Projects API
 ```typescript
 // List and create projects

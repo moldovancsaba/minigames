@@ -4,7 +4,6 @@ interface CreateOrganizationInput {
   name: string;
   slug: string;
   description?: string;
-  creatorId: string;
 }
 
 export interface Organization {
@@ -18,7 +17,6 @@ export interface Organization {
     userId: string;
     role: 'owner' | 'admin' | 'member';
     joinedAt: string;
-    invitedBy?: string;
   }[];
   settings: {
     allowPublicProjects: boolean;

@@ -1,70 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrganizationService } from '@/services/organization';
+import { OrganizationModel } from '@/lib/mongodb/organizationModel';
 import { ProjectService } from '@/services/project';
+import { OrganizationService } from '@/services/organization';
+import {
+  publicApiMiddleware,
+  formatApiResponse,
+  applyCorsHeaders,
+  createRequestMetadata,
+  checkRateLimit
+} from '@/middleware/api';
 
 /**
  * GET /api/organizations/[id]
  * Retrieve a single organization by ID
  */
-// Proper typing according to Next.js documentation.
-export async function GET(request: NextRequest) {
-  const id = request.nextUrl.pathname.split('/').pop();
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) {
+    return NextResponse.json(middlewareResponse);
+  }
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
+const { searchParams } = request.nextUrl;
+    const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization ID is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
-      );
+return NextResponse.json(applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization ID is required',
+          400,
+          rateLimitInfo
+        )
+      ));
     }
 
     const organization = await OrganizationService.getOrganization(id);
-    
-    // Fetch associated projects if organization exists
-    if (organization) {
-      const { projects } = await ProjectService.listProjects({ organizationId: id });
-      // Create a new object with projects
-      return NextResponse.json({
-        success: true,
-        data: { ...organization, projects },
-        timestamp: new Date().toISOString()
-      });
-    }
-
     if (!organization) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
-      );
+return NextResponse.json(applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization not found',
+          404,
+          rateLimitInfo
+        )
+      ));
     }
 
-    return NextResponse.json({
-      success: true,
-      data: organization,
-      timestamp: new Date().toISOString()
-    });
+    // Fetch associated projects
+    const { projects } = await ProjectService.listProjects({ organizationId: id });
+    
+    return NextResponse.json(
+      applyCorsHeaders(
+        formatApiResponse(
+          { ...organization, projects },
+          null,
+          200,
+          rateLimitInfo
+        )
+      )
+    );
   } catch (error: any) {
-    console.error('Error fetching organization:', {
-      error: error.message,
+    console.error('Failed to fetch organization:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'get_organization'
     });
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to fetch organization',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+return NextResponse.json(applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to fetch organization',
+        500,
+        rateLimitInfo
+      )
+ )
     );
   }
 }
@@ -74,18 +90,26 @@ export async function GET(request: NextRequest) {
  * Update an organization
  */
 export async function PUT(request: NextRequest) {
-  const id = request.nextUrl.pathname.split('/').pop();
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
+    const id = request.nextUrl.pathname.split('/')[3]; // Extract ID from /api/organizations/[id]
     const updateData = await request.json();
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization ID is required',
-          timestamp: new Date().toISOString()
-        },
-        { status: 400 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization ID is required',
+          400,
+          rateLimitInfo
+        )
       );
     }
 
@@ -97,46 +121,45 @@ export async function PUT(request: NextRequest) {
     const organization = await OrganizationService.updateOrganization(id, updateData);
 
     if (!organization) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Organization not found',
-          timestamp: new Date().toISOString()
-        },
-        { status: 404 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization not found',
+          404,
+          rateLimitInfo
+        )
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: organization,
-      timestamp: new Date().toISOString()
-    });
+    return applyCorsHeaders(
+      formatApiResponse(organization, null, 200, rateLimitInfo)
+    );
   } catch (error: any) {
-    console.error('Error updating organization:', {
-      error: error.message,
+    console.error('Failed to update organization:', {
+      message: error.message,
       stack: error.stack,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      operation: 'update_organization'
     });
 
     if (error.message === 'Organization with this slug already exists') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-          timestamp: new Date().toISOString()
-        },
-        { status: 409 }
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          error.message,
+          409,
+          rateLimitInfo
+        )
       );
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Failed to update organization',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error.message || 'Failed to update organization',
+        500,
+        rateLimitInfo
+      )
     );
   }
 }
@@ -146,45 +169,75 @@ export async function PUT(request: NextRequest) {
  * Delete an organization and its related projects
  */
 export async function DELETE(request: NextRequest) {
-  const timestamp = new Date().toISOString();
-  const id = request.nextUrl.pathname.split('/').pop();
-  
+  // Apply public API middleware
+  const middlewareResponse = await publicApiMiddleware(request);
+  if (middlewareResponse) return middlewareResponse;
+
+  // Get request metadata for rate limiting
+  const metadata = createRequestMetadata(request);
+  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
+
   try {
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        error: 'Organization ID is required',
-        timestamp
-      }, { status: 400 });
-    }
-
-    const success = await OrganizationService.deleteOrganization(id);
-
-    if (!success) {
-      return NextResponse.json({
-        success: false,
-        error: `Organization with ID '${id}' not found`,
-        timestamp
-      }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: { id },
-      timestamp
-    });
+    const id = request.nextUrl.pathname.split('/')[3]; // Extract ID from /api/organizations/[id]
     
-  } catch (error) {
-    console.error('Error deleting organization:', {
-      error: error instanceof Error ? error.message : String(error),
+    if (!id) {
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          'Organization ID is required',
+          400,
+          rateLimitInfo
+        )
+      );
+    }
+
+    const deleted = await OrganizationModel.delete(id);
+
+    if (!deleted) {
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          `Organization with ID '${id}' not found`,
+          404,
+          rateLimitInfo
+        )
+      );
+    }
+
+    return applyCorsHeaders(
+      formatApiResponse(
+        { id },
+        null,
+        200,
+        rateLimitInfo
+      )
+    );
+  } catch (error: any) {
+    console.error('Failed to delete organization:', {
+      message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      timestamp
+      timestamp: new Date().toISOString(),
+      operation: 'delete_organization'
     });
 
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to delete organization',
-      timestamp
-    }, { status: 500 });
+    if (error instanceof Error && error.message.includes('not found')) {
+      return applyCorsHeaders(
+        formatApiResponse(
+          null,
+          `Organization with ID '${request.nextUrl.pathname.split('/')[3]}' not found`,
+          404,
+          rateLimitInfo
+        )
+      );
+    }
+
+    return applyCorsHeaders(
+      formatApiResponse(
+        null,
+        error instanceof Error ? error.message : 'Failed to delete organization',
+        500,
+        rateLimitInfo
+      )
+    );
   }
 }

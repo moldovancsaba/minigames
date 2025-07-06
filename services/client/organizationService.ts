@@ -1,11 +1,24 @@
 import type { Organization } from '@/services/organizationService';
 export type { Organization };
 
+export interface OrganizationMember {
+  userId: string;
+  role: 'owner' | 'admin' | 'member';
+  joinedAt: string;
+  projects: string[];
+}
+
 interface CreateOrganizationDto {
   name: string;
   slug?: string;
   description?: string;
-  creatorId: string;
+  members?: OrganizationMember[];
+  settings?: {
+    allowPublicProjects?: boolean;
+    defaultProjectVisibility?: 'public' | 'private';
+    maxMembers?: number;
+    customDomain?: string;
+  };
 }
 
 export class OrganizationService {

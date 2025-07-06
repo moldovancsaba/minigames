@@ -8,10 +8,10 @@ import { NewProjectModal } from '@/components/client/projects/NewProjectModal';
 import { DeleteProjectButton } from '@/components/client/projects/DeleteProjectButton';
 import { Button } from '@/components/shared/Button';
 import { LoadingState } from '@/components/shared/LoadingState';
-import { Project } from '@/app/hooks/useProjects';
+import { ProjectType } from '@/app/types/index';
 
 interface ProjectRowProps {
-  project: Project;
+  project: ProjectType;
   organizationName: string;
 }
 
@@ -67,39 +67,38 @@ const LoadingTable = () => {
 
 export default function ProjectsPage() {
   const { projects, loading: projectsLoading, error: projectsError, setProjects } = useProjects();
-  const { organization, loading: orgLoading, error: orgError } = useCurrentOrganization();
   const [showNewModal, setShowNewModal] = useState(false);
+  const [organizationId, setOrganizationId] = useState<string>('');
   const [organizationNames, setOrganizationNames] = useState<Record<string, string>>({});
 
-  // Fetch organization names for all projects
+  // Fetch organization list on mount
   React.useEffect(() => {
-    const fetchOrganizationNames = async () => {
-      const names: Record<string, string> = {};
-      const uniqueOrgIds = [...new Set(projects?.map(p => p.organizationId) || [])];
-
-      for (const orgId of uniqueOrgIds) {
-        try {
-          const response = await fetch(`/api/organizations/${orgId}`);
-          if (response.ok) {
-            const { data } = await response.json();
-            names[orgId] = data.name;
+    const fetchOrganizations = async () => {
+      try {
+        const response = await fetch('/api/organizations');
+        if (response.ok) {
+          const { data: organizations } = await response.json();
+          const names: Record<string, string> = {};
+          organizations.forEach((org: any) => {
+            names[org._id] = org.name;
+          });
+          setOrganizationNames(names);
+          if (organizations.length > 0) {
+            setOrganizationId(organizations[0]._id);
           }
-        } catch (error) {
-          console.error(`Failed to fetch organization name for ID ${orgId}:`, error);
         }
+      } catch (error) {
+        console.error('Failed to fetch organizations:', error);
       }
-      setOrganizationNames(names);
     };
 
-    if (projects?.length > 0) {
-      fetchOrganizationNames();
-    }
-  }, [projects]);
+    fetchOrganizations();
+  }, []);
 
-  const loading = projectsLoading || orgLoading;
-  const error = projectsError || orgError;
+  const loading = projectsLoading;
+  const error = projectsError;
 
-  const handleCreateProject = async (data: Partial<Project>) => {
+  const handleCreateProject = async (data: Partial<ProjectType>) => {
     const response = await fetch('/api/projects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -134,7 +133,7 @@ export default function ProjectsPage() {
             <Button
               type="button"
               onClick={() => {
-                if (!organization) {
+                if (!organizationId) {
                   alert('Please create an organization first');
                   return;
                 }
@@ -144,13 +143,13 @@ export default function ProjectsPage() {
               <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5 inline-block" aria-hidden="true" />
               New Project
             </Button>
-            {organization && (
+            {organizationId && (
               <NewProjectModal
                 open={showNewModal}
                 onClose={() => setShowNewModal(false)}
                 onSubmit={(data) => handleCreateProject({
                   ...data,
-                  organizationId: organization?._id?.toString() || '',
+                  organizationId: organizationId,
                 })}
               />
             )}

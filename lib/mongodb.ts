@@ -6,7 +6,7 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI;
-const dbName = new URL(uri).pathname.substr(1) || 'mosaic-cluster';
+const dbName = process.env.MONGODB_DB || 'mosaic';
 
 // Types for the cached connection
 interface MongoConnection {

@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Project } from '@/app/types/index';
+import { ProjectType } from '@/app/types/index';
 
 interface ProjectListProps {
-  projects: Project[];
+  projects: ProjectType[];
   organizationId: string;
   organizationName: string;
 }

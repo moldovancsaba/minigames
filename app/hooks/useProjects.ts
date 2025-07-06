@@ -5,7 +5,7 @@ import { AssociationService } from '@/services/client/associationService';
 import { ProjectService } from '@/services/client/projectService';
 
 
-export interface Project {
+export interface ProjectType {
   _id: string;
   name: string;
   slug: string;
@@ -37,7 +37,7 @@ export interface Project {
 }
 
 export function useProjects(organizationId?: string) {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +55,7 @@ export function useProjects(organizationId?: string) {
           projectData = data;
         }
         
-        setProjects(projectData.map((project: Project) => ({
+        setProjects(projectData.map((project: ProjectType) => ({
           ...project,
           _id: project._id.toString()
         })));

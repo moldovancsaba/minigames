@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
  * Project interface for TypeScript type safety
  * Represents a collection of mosaics with specific settings and permissions
  */
-export interface Project {
+export interface ProjectType {
   _id?: ObjectId;
   name: string;
   slug: string;

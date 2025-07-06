@@ -55,6 +55,41 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+### API Response Format
+
+All API endpoints follow a standardized response format:
+
+```typescript
+{
+  success: boolean;  // Operation status
+  data?: T;          // Optional response data
+  error?: string;    // Error message if success is false
+  timestamp: string;  // ISO 8601 with milliseconds (e.g. 2025-07-05T21:15:00.000Z)
+}
+```
+
+Example successful response:
+```json
+{
+  "success": true,
+  "data": {
+    "name": "Project Alpha",
+    "slug": "project-alpha",
+    "status": "active"
+  },
+  "timestamp": "2025-07-05T21:15:00.000Z"
+}
+```
+
+Example error response:
+```json
+{
+  "success": false,
+  "error": "Project not found",
+  "timestamp": "2025-07-05T21:15:00.000Z"
+}
+```
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { connectToDatabase } from '@/lib/mongodb';
-import type { Project } from '@/models/project';
+import type { ProjectType } from '@/app/types/index';
 import type { Organization } from '@/models/organization';
 
 /**
@@ -31,7 +31,7 @@ export class AssociationService {
       sort?: 'createdAt' | 'updatedAt' | 'name';
       order?: 'asc' | 'desc';
     } = {}
-  ): Promise<{ projects: Project[]; total: number }> {
+  ): Promise<{ projects: ProjectType[]; total: number }> {
     const collection = await this.getProjectCollection();
     const {
       status,

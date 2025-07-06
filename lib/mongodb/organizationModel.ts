@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db/init';
+import { Project } from './projectModel';
 import type { Organization } from '@/services/organizationService';
 
 const organizationSchema = new mongoose.Schema({
@@ -86,7 +87,18 @@ export class OrganizationModel {
     await dbConnect();
   }
 
-  static async create(data: { name: string; slug: string; description?: string }): Promise<Organization> {
+  static async create(data: {
+    name: string;
+    slug: string;
+    description?: string;
+    status?: 'active' | 'inactive' | 'archived';
+    settings?: {
+      allowPublicProjects?: boolean;
+      defaultProjectVisibility?: 'public' | 'private';
+      maxMembers?: number;
+      customDomain?: string;
+    };
+  }): Promise<Organization> {
     await this.connect();
     const org = await Organization.create(data);
     return serializeOrganization(org);
@@ -105,21 +117,31 @@ export class OrganizationModel {
   }
 
   static async delete(id: string): Promise<boolean> {
-    await this.connect();
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
+    console.log(`[${new Date().toISOString()}] Starting organization deletion for ID: ${id}`);
+    
     try {
+      await this.connect();
+      console.log(`[${new Date().toISOString()}] Connected to database`);
+
+      // First check if organization exists
+      const organization = await Organization.findById(id);
+      console.log(`[${new Date().toISOString()}] Organization found:`, organization);
+      
+      if (!organization) {
+        throw new Error('Organization not found');
+      }
+
       // Delete all projects associated with the organization
-      await mongoose.models.Project.deleteMany({ organizationId: id });
+      const projectsDeleted = await Project.deleteMany({ organizationId: new mongoose.Types.ObjectId(id) });
+      console.log(`[${new Date().toISOString()}] Projects deleted:`, projectsDeleted);
+
       // Delete the organization itself
       const result = await Organization.findByIdAndDelete(id);
-      await session.commitTransaction();
-      session.endSession();
+      console.log(`[${new Date().toISOString()}] Organization deletion result:`, result);
+
       return !!result;
     } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
+      console.error(`[${new Date().toISOString()}] Error during organization deletion:`, error);
       throw error;
     }
   }
