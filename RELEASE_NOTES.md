@@ -1,5 +1,26 @@
 # Release Notes
 
+## [v6.1.1] — 2025-07-05T21:30:00.000Z
+
+### Patch
+- Incremented version number for consistency
+
+## [v6.2.0] — 2025-07-05T21:15:00.000Z
+
+### Enhanced
+- Improved MongoDB connection handling
+  - Unified development and production connection logic
+  - Added connection health checks with ping
+  - Enhanced timeout settings and error handling
+  - Added connection reset for stale connections
+
+### Technical Details
+- Removed environment-based connection branching
+- Added connection health monitoring
+- Enhanced error logging and feedback
+- Fixed build and deployment issues
+- Successfully verified in production
+
 ## [v6.1.0] — 2025-07-05T20:52:17.000Z
 
 ### Enhanced
