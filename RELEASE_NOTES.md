@@ -1,5 +1,48 @@
 # Release Notes
 
+## [v7.0.0] — 2025-07-10
+### Major Changes
+- Added comprehensive slug generation and validation for organizations
+- Improved API routes with consistent static method usage
+- Resolved existing TypeScript and MongoDB errors for stability and reliability
+
+### Technical Details
+- Updated slug handling logic for organizations
+- Verified MongoDB index handling for unique constraints
+- Enhanced build and development processes for the new major version
+
+## [v6.3.3] - 2024-01-24
+### Fixed
+- Organization creation error by adding proper slug generation
+- Organization API route to use correct model methods
+- Added slug generation utility for consistent URL-friendly slugs
+
+## [v6.3.2] - 2024-01-24
+### Fixed
+- Added missing imports and validateObjectId utility to fix TypeScript build errors in projects API route
+
+## [v6.2.1] — 2025-07-06T12:35:18Z
+
+### Fixed
+- MongoDB version compatibility issues
+  - Downgraded mongodb to 5.9.0
+  - Updated mongoose to 7.6.0
+  - Resolved dependency conflicts with next-auth
+- Next.js API route handlers
+  - Fixed route exports format
+  - Updated type definitions for proper TypeScript support
+  - Enhanced error handling and response types
+- Build and Development Environment
+  - Fixed build failures and TypeScript errors
+  - Verified development server functionality
+  - Improved error reporting and validation
+
+### Technical Details
+- Resolved MongoDB adapter version conflicts
+- Updated API response types for better type safety
+- Enhanced error handling in route handlers
+- Fixed project and organization service integration
+
 ## [v6.1.2] — 2025-07-16T16:00:00.000Z
 
 ### Security

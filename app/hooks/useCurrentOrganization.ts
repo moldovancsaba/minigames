@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Organization } from '@/services/client/organizationService';
-import { OrganizationService } from '@/services/client/organizationService';
+import type { Organization } from '@/app/types/organization';
+import { OrganizationService } from '@/services/organization';
 
 interface UseCurrentOrganizationReturn {
   organization: Organization | null;

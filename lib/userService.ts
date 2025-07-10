@@ -1,5 +1,5 @@
 import User, { IUser } from '@/models/User';
-import dbConnect from '@/lib/db';
+import { connectToDatabase } from '@/lib/database';
 
 /**
  * UserService class provides centralized user management operations
@@ -14,7 +14,7 @@ export class UserService {
    * Automatically assigns admin role for configured admin email
    */
   static async findOrCreateUser(email: string): Promise<IUser> {
-    await dbConnect();
+    await connectToDatabase();
     
     const isAdminEmail = email.toLowerCase() === 'admin@example.com'; // Configure admin email
     
@@ -41,12 +41,12 @@ export class UserService {
    * Ensures consistent email format by converting to lowercase
    */
   static async getAllUsers(): Promise<IUser[]> {
-    await dbConnect();
+    await connectToDatabase();
     return User.find().sort({ createdAt: -1 });
   }
 
   static async updateUserRole(email: string, role: 'admin' | 'user'): Promise<IUser | null> {
-    await dbConnect();
+    await connectToDatabase();
     return User.findOneAndUpdate(
       { email: email.toLowerCase() },
       { $set: { role } },
@@ -55,7 +55,7 @@ export class UserService {
   }
 
   static async findByEmail(email: string): Promise<IUser | null> {
-    await dbConnect();
+    await connectToDatabase();
     return User.findOne({ email: email.toLowerCase() });
   }
 }

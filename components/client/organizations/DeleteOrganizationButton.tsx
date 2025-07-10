@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { Button } from '@/components/shared/Button';
+import { OrganizationService } from '@/services/organization';
 
 interface DeleteOrganizationButtonProps {
   organizationId: string;
@@ -18,20 +19,16 @@ export function DeleteOrganizationButton({ organizationId, organizationName }: D
 
     setIsDeleting(true);
     try {
-      // Replace this with your API call
-      const response = await fetch(`/api/organizations/${organizationId}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete organization');
-      }
-
-      toast.success('Organization deleted successfully');
+      await OrganizationService.deleteOrganization(organizationId);
+      toast.success(`Organization "${organizationName}" deleted successfully`);
       window.location.href = '/organizations';
     } catch (error) {
       console.error('Error deleting organization:', error);
-      toast.error('Unable to process your request at this time. Please try again later.');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Unable to process your request at this time. Please try again later.'
+      );
     } finally {
       setIsDeleting(false);
     }

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dbConnect from '@/lib/db/init';
 import { Project } from './projectModel';
-import type { Organization } from '@/services/organizationService';
+import type { Organization } from '@/app/types/organization';
 
 const organizationSchema = new mongoose.Schema({
   name: {
@@ -116,33 +116,68 @@ export class OrganizationModel {
     return org ? serializeOrganization(org) : null;
   }
 
-  static async delete(id: string): Promise<boolean> {
-    console.log(`[${new Date().toISOString()}] Starting organization deletion for ID: ${id}`);
+  static async delete(id: string): Promise<{ success: boolean; error?: string }> {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Starting organization deletion for ID: ${id}`);
     
     try {
-      await this.connect();
-      console.log(`[${new Date().toISOString()}] Connected to database`);
+      // Ensure proper database connection
+      await Promise.race([
+        this.connect(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timeout')), 5000))
+      ]);
+      console.log(`[${timestamp}] Connected to database`);
+
+      // Validate ID format
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid organization ID format');
+      }
 
       // First check if organization exists
       const organization = await Organization.findById(id);
-      console.log(`[${new Date().toISOString()}] Organization found:`, organization);
+      console.log(`[${timestamp}] Organization lookup result:`, organization ? 'Found' : 'Not found');
       
       if (!organization) {
         throw new Error('Organization not found');
       }
 
-      // Delete all projects associated with the organization
-      const projectsDeleted = await Project.deleteMany({ organizationId: new mongoose.Types.ObjectId(id) });
-      console.log(`[${new Date().toISOString()}] Projects deleted:`, projectsDeleted);
+      // Start a session for transaction
+      const session = await mongoose.startSession();
+      let success = false;
 
-      // Delete the organization itself
-      const result = await Organization.findByIdAndDelete(id);
-      console.log(`[${new Date().toISOString()}] Organization deletion result:`, result);
+      try {
+        await session.withTransaction(async () => {
+          // Delete all projects associated with the organization
+          const projectsDeleted = await Project.deleteMany(
+            { organizationId: new mongoose.Types.ObjectId(id) },
+            { session }
+          );
+          console.log(`[${timestamp}] Projects deleted:`, projectsDeleted.deletedCount);
 
-      return !!result;
+          // Delete the organization itself
+          const result = await Organization.findByIdAndDelete(id).session(session);
+          console.log(`[${timestamp}] Organization deletion result:`, result ? 'Success' : 'Failed');
+
+          if (!result) {
+            throw new Error('Failed to delete organization');
+          }
+
+          success = true;
+        });
+      } finally {
+        await session.endSession();
+      }
+
+      return { success };
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Error during organization deletion:`, error);
-      throw error;
+      console.error(`[${timestamp}] Error during organization deletion:`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred during organization deletion'
+      };
     }
   }
 

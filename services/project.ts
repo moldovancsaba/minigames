@@ -1,10 +1,11 @@
 import { ObjectId } from 'mongodb';
-import { connectToDatabase } from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/database';
 import { ProjectType, ProjectSettings, ProjectMetadata } from '@/models/project';
 
 export class ProjectService {
   private static async getCollection() {
-    const { db } = await connectToDatabase();
+    const pool = await connectToDatabase();
+    const { db } = pool;
     return db.collection('projects');
   }
 
@@ -57,7 +58,21 @@ export class ProjectService {
       ? { slug: identifier, organizationId: new ObjectId(organizationId) }
       : { slug: identifier };
 
-    return collection.findOne(query);
+    const projectDoc = await collection.findOne(query);
+    if (!projectDoc) return null;
+    return {
+      _id: projectDoc._id,
+      name: projectDoc.name,
+      slug: projectDoc.slug,
+      description: projectDoc.description,
+        organizationId: projectDoc.organizationId,
+      visibility: projectDoc.visibility,
+      status: projectDoc.status,
+      createdAt: projectDoc.createdAt,
+      updatedAt: projectDoc.updatedAt,
+      settings: projectDoc.settings,
+      metadata: projectDoc.metadata
+    };
   }
 
   /**
@@ -102,7 +117,21 @@ export class ProjectService {
       { returnDocument: 'after' }
     );
 
-    return result.value;
+    const projectDoc = result.value;
+    if (!projectDoc) return null;
+    return {
+      _id: projectDoc._id,
+      name: projectDoc.name,
+      slug: projectDoc.slug,
+      description: projectDoc.description,
+      organizationId: projectDoc.organizationId,
+      visibility: projectDoc.visibility,
+      status: projectDoc.status,
+      createdAt: projectDoc.createdAt,
+      updatedAt: projectDoc.updatedAt,
+      settings: projectDoc.settings,
+      metadata: projectDoc.metadata
+    };
   }
 
   /**
@@ -156,7 +185,7 @@ export class ProjectService {
 
     const skip = (page - 1) * limit;
 
-    const [projects, total] = await Promise.all([
+    const [projectDocs, total] = await Promise.all([
       collection
         .find(query)
         .sort({ createdAt: -1 })
@@ -165,6 +194,20 @@ export class ProjectService {
         .toArray(),
       collection.countDocuments(query)
     ]);
+
+    const projects = projectDocs.map((doc: any) => ({
+      _id: doc._id,
+      name: doc.name,
+      slug: doc.slug,
+      description: doc.description,
+        organizationId: doc.organizationId,
+      visibility: doc.visibility,
+      status: doc.status,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      settings: doc.settings,
+      metadata: doc.metadata
+    }));
 
     return { projects, total };
   }
@@ -192,7 +235,21 @@ export class ProjectService {
       { returnDocument: 'after' }
     );
 
-    return result.value;
+    const projectDoc = result.value;
+    if (!projectDoc) return null;
+    return {
+      _id: projectDoc._id,
+      name: projectDoc.name,
+      slug: projectDoc.slug,
+      description: projectDoc.description,
+      organizationId: projectDoc.organizationId,
+      visibility: projectDoc.visibility,
+      status: projectDoc.status,
+      createdAt: projectDoc.createdAt,
+      updatedAt: projectDoc.updatedAt,
+      settings: projectDoc.settings,
+      metadata: projectDoc.metadata
+    };
   }
 
   /**
@@ -218,6 +275,20 @@ export class ProjectService {
       { returnDocument: 'after' }
     );
 
-    return result.value;
+    const projectDoc = result.value;
+    if (!projectDoc) return null;
+    return {
+      _id: projectDoc._id,
+      name: projectDoc.name,
+      slug: projectDoc.slug,
+      description: projectDoc.description,
+      organizationId: projectDoc.organizationId,
+      visibility: projectDoc.visibility,
+      status: projectDoc.status,
+      createdAt: projectDoc.createdAt,
+      updatedAt: projectDoc.updatedAt,
+      settings: projectDoc.settings,
+      metadata: projectDoc.metadata
+    };
   }
 }

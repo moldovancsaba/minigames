@@ -44,20 +44,23 @@ export function useProjects(organizationId?: string) {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        let projectData;
+        let projectData = [];
         if (organizationId) {
           const { projects: orgProjects } = await AssociationService.listOrganizationProjects(organizationId);
-          projectData = orgProjects;
+          projectData = orgProjects || [];
         } else {
           const response = await fetch('/api/projects');
           if (!response.ok) throw new Error('Failed to fetch projects');
           const { data } = await response.json();
-          projectData = data;
+          projectData = data || [];
         }
         
-        setProjects(projectData.map((project: ProjectType) => ({
+        // Ensure projectData is an array and handle potential null/undefined values
+        const projects = Array.isArray(projectData) ? projectData : [];
+        setProjects(projects.map((project: ProjectType) => ({
           ...project,
-          _id: project._id.toString()
+          _id: project._id?.toString() || project._id,
+          organizationId: project.organizationId?.toString() || project.organizationId
         })));
         setError(null);
       } catch (err) {

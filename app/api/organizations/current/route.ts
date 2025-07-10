@@ -3,12 +3,9 @@ import { OrganizationService } from '@/services/organization';
 
 export async function GET(request: NextRequest) {
   try {
-    const organizations = await OrganizationService.listOrganizations({
-      limit: 1,
-      page: 1
-    });
+    const organizations = await OrganizationService.listOrganizations();
 
-    if (organizations.organizations.length === 0) {
+    if (organizations.length === 0) {
       return NextResponse.json({
         success: false,
         error: 'No organizations found',
@@ -18,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: organizations.organizations[0],
+      data: organizations[0],
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {

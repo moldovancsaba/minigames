@@ -13,6 +13,16 @@ interface DeleteProjectButtonProps {
   organizationId?: string;
 }
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.message.includes('not belong to this organization')) {
+      return 'You do not have permission to delete this project';
+    }
+    return error.message;
+  }
+  return 'An unexpected error occurred';
+}
+
 export function DeleteProjectButton({ projectId, projectName, organizationId }: DeleteProjectButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -25,24 +35,15 @@ export function DeleteProjectButton({ projectId, projectName, organizationId }: 
     setIsDeleting(true);
     try {
       // If organizationId is provided, verify project belongs to organization
-      if (organizationId) {
-        const belongsToOrg = await AssociationClient.verifyProjectOrganization(
-          projectId,
-          organizationId
-        );
-        if (!belongsToOrg) {
-          throw new Error('Project does not belong to this organization');
-        }
-      }
-
-      const success = await ProjectService.deleteProject(projectId);
+      // Pass organizationId to deleteProject for ownership verification
+      const success = await ProjectService.deleteProject(projectId, organizationId);
       if (success) {
         toast.success('Project deleted successfully');
         // If we're in an organization context, redirect to org's projects
         if (organizationId) {
-          router.push(`/organizations/${organizationId}`);
+          router.push(`/organizations/${organizationId}` as any);
         } else {
-          router.push('/projects');
+          router.push('/projects' as any);
         }
         router.refresh();
       } else {

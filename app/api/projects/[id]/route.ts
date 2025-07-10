@@ -206,7 +206,7 @@ export async function DELETE(request: NextRequest) {
 
     return applyCorsHeaders(
       formatApiResponse(
-        { message: 'Project deleted successfully' },
+        { success: true },
         null,
         200,
         rateLimitInfo

@@ -5,17 +5,15 @@ import { useState } from 'react';
 interface OrganizationFormProps {
   initialData?: {
     name: string;
-    slug: string;
     description?: string;
   };
-  onSubmit: (data: { name: string; slug: string; description: string }) => Promise<void>;
+  onSubmit: (data: { name: string; description: string }) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function OrganizationForm({ initialData, onSubmit, onCancel }: OrganizationFormProps) {
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
-    slug: initialData?.slug || '',
     description: initialData?.description || '',
   });
   const [error, setError] = useState('');
@@ -60,24 +58,6 @@ export default function OrganizationForm({ initialData, onSubmit, onCancel }: Or
         </div>
       </div>
 
-      <div>
-        <label htmlFor="slug" className="block text-sm font-medium leading-6 text-gray-900">
-          Slug
-        </label>
-        <div className="mt-2">
-          <input
-            type="text"
-            name="slug"
-            id="slug"
-            required
-            pattern="[a-z0-9-]+"
-            title="Only lowercase letters, numbers, and hyphens are allowed"
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-          />
-        </div>
-      </div>
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium leading-6 text-gray-900">

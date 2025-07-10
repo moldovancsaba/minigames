@@ -24,7 +24,7 @@ export function ProjectList({ projects, organizationId, organizationName }: Proj
         {projects.map((project) => (
           <li key={project._id}>
             <Link
-              href={`/app/projects/${project._id}`}
+              href={`/app/projects/${project._id}` as any}
               className="block hover:bg-gray-50"
             >
               <div className="px-4 py-4 sm:px-6">

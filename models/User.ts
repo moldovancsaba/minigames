@@ -5,7 +5,9 @@ import { Types } from 'mongoose';
 export interface IUser {
   _id: Types.ObjectId;
   email: string;
-  role: 'admin' | 'user';
+  roles: string[];
+  permissions: string[];
+  name?: string;
   lastLoginAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -19,10 +21,17 @@ const userSchema = new mongoose.Schema<IUser>({
     lowercase: true,
     match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please enter a valid email address']
   },
-  role: { 
-    type: String, 
-    enum: ['admin', 'user'],
-    default: 'user'
+  roles: { 
+    type: [String],
+    default: []
+  },
+  permissions: {
+    type: [String],
+    default: []
+  },
+  name: {
+    type: String,
+    trim: true
   },
   lastLoginAt: { 
     type: Date,

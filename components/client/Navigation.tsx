@@ -22,12 +22,6 @@ function NavigationContent() {
             >
               Projects
             </Link>
-            <Link 
-              href="/builder"
-              className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-gray-500"
-            >
-              Builder
-            </Link>
             </div>
           </div>
         </div>

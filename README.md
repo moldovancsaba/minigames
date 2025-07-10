@@ -1,6 +1,6 @@
 ![Version](https://img.shields.io/badge/version-6.0.1-blue.svg)
 
-_Last updated: 2025-07-01T00:08:01.000Z_
+_Last updated: 2025-07-05T22:00:00.000Z_
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
@@ -90,7 +90,56 @@ Example error response:
 }
 ```
 
+## Project Structure
+
+```
+/app
+  /api             # API route handlers
+    /organizations # Organization-related endpoints
+    /projects      # Project-related endpoints
+  /components     # React components
+    /client       # Client-side components
+    /server       # Server-side components
+  /hooks          # Custom React hooks
+  /organization   # Organization-related pages
+  /projects       # Project-related pages
+  /users          # User management pages
+
+/components
+  /client         # Client-side components
+    /organizations # Organization-specific components
+    /projects     # Project-specific components
+  /shared         # Shared UI components
+
+/lib
+  /mongodb        # MongoDB models and connections
+  /middleware     # Request middleware
+  /errors         # Error handling utilities
+  /logging        # Logging infrastructure
+  database.ts     # Database configuration
+  auth.ts         # Authentication utilities
+
+/services
+  /api            # API service interfaces
+  /client         # Client-side services
+
+/types            # TypeScript type definitions
+/middleware       # Application middleware
+/schemas          # Validation schemas
+/models           # Data models
+```
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Documentation
+
+Refer to these documents for specific aspects of the project:
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture and design
+- [LEARNINGS.md](LEARNINGS.md) - Development insights and decisions
+- [ROADMAP.md](ROADMAP.md) - Future development plans
+- [TASKLIST.md](TASKLIST.md) - Current development tasks
+- [RELEASE_NOTES.md](RELEASE_NOTES.md) - Version history and changes
 
 ## Learn More
 

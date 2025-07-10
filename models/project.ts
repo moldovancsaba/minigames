@@ -32,8 +32,7 @@ export interface ProjectSettings {
   moderateComments: boolean;
   enableSharing: boolean;
   allowDownloads: boolean;
-  maxImageSize?: number; // in bytes
-  allowedFileTypes: string[]; // e.g., ['jpg', 'png', 'gif']
+  allowedFileTypes: string[]; // Allowed file types for project assets
 }
 
 /**
@@ -41,7 +40,6 @@ export interface ProjectSettings {
  * Additional information and statistics about the project
  */
 export interface ProjectMetadata {
-  totalImages: number;
   lastActivity: Date;
   tags: string[];
   contributors: ProjectContributor[];
@@ -131,11 +129,6 @@ export const projectSchema = {
           bsonType: 'bool',
           description: 'Whether image downloads are allowed'
         },
-        maxImageSize: {
-          bsonType: ['int', 'null'],
-          minimum: 0,
-          description: 'Maximum allowed image size in bytes'
-        },
         allowedFileTypes: {
           bsonType: 'array',
           minItems: 1,
@@ -148,13 +141,8 @@ export const projectSchema = {
     },
     metadata: {
       bsonType: 'object',
-      required: ['totalImages', 'lastActivity', 'tags', 'contributors'],
+      required: ['lastActivity', 'tags', 'contributors'],
       properties: {
-        totalImages: {
-          bsonType: 'int',
-          minimum: 0,
-          description: 'Total number of images in the project'
-        },
         lastActivity: {
           bsonType: 'date',
           description: 'Timestamp of last project activity'

@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { EditProjectButton } from '@/components/client/projects/EditProjectButton';
 import { DeleteProjectButton } from '@/components/client/projects/DeleteProjectButton';
 
 import type { ProjectType } from '@/app/types/index';
@@ -22,7 +21,7 @@ export function ProjectPageClient({ project, organization }: ProjectPageProps) {
           <div className="sm:flex-auto">
             <div className="flex items-center space-x-2">
               <Link
-                href={`/app/organization/${organization._id}`}
+                href={`/organizations/${organization._id}` as any}
                 className="text-sm text-indigo-600 hover:text-indigo-900"
               >
                 {organization.name}
@@ -35,7 +34,6 @@ export function ProjectPageClient({ project, organization }: ProjectPageProps) {
             )}
           </div>
           <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none space-x-3">
-            <EditProjectButton project={project} />
             <DeleteProjectButton 
               projectId={project._id}
               projectName={project.name}

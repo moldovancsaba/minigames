@@ -1,5 +1,5 @@
 import type { ProjectType } from '@/app/types/index';
-import type { Organization } from '@/services/organizationService';
+import type { Organization } from '@/app/types/organization';
 
 interface ListProjectsOptions {
   status?: 'active' | 'archived';

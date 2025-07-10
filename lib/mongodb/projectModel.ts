@@ -100,12 +100,17 @@ export const serializeProject = (project: any): ProjectType => {
     organizationId: project.organizationId.toString(),
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
-    'metadata.lastActivity': project.metadata?.lastActivity?.toISOString(),
-    'metadata.contributors': project.metadata?.contributors?.map((contributor: any) => ({
-      ...contributor,
-      userId: contributor.userId.toString(),
-      joinedAt: contributor.joinedAt.toISOString()
-    }))
+    metadata: {
+      ...project.metadata,
+      lastActivity: project.metadata?.lastActivity?.toISOString(),
+      contributors: Array.isArray(project.metadata?.contributors)
+        ? project.metadata.contributors.map((contributor: any) => ({
+            ...contributor,
+            userId: contributor.userId?.toString() || contributor.userId,
+            joinedAt: contributor.joinedAt?.toISOString() || contributor.joinedAt
+          }))
+        : []
+    }
   };
 };
 
@@ -161,5 +166,11 @@ export class ProjectModel {
     };
     const existingProject = await Project.findOne(query);
     return !existingProject;
+  }
+
+  static async findAll(): Promise<ProjectType[]> {
+    await this.connect();
+    const projects = await Project.find().sort({ createdAt: -1 });
+    return projects.map(serializeProject);
   }
 }

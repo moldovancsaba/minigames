@@ -6,10 +6,9 @@ import OrganizationForm from '@/app/components/client/organizations/Organization
 interface EditOrganizationModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (organization: { name: string; slug: string; description: string }) => Promise<void>;
+  onSubmit: (organization: { name: string; description: string; }) => Promise<void>;
   initialData: {
     name: string;
-    slug: string;
     description?: string;
   };
 }

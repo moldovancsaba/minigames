@@ -1,23 +1,27 @@
-# System Architecture
+# System Architecture (v6.3.0)
 
 ## Core Components
 
-### Public Access System
-- **Role**: Manages public access to all resources
-- **Dependencies**: Next.js Middleware
+### Authentication System
+- **Role**: Manages user authentication and authorization
+- **Dependencies**: NextAuth.js, MongoDB Adapter, JsonWebToken
 - **Status**: Active
 
 #### Core Features
-- **Public Access Model**:
-  - All resources are publicly accessible
-  - No authentication required
-  - Read-only access to all content
+- **Authentication Model**:
+  - JWT-based authentication with enhanced token verification
+  - Comprehensive role-based access control (RBAC)
+  - Robust session management with MongoDB
+  - Customizable authentication providers
+  - Enhanced error handling and validation
+  - User permission tracking and verification
 
-#### Security Implications
-- **Data Exposure**:
-  - All data is publicly visible
-  - No private or restricted content
-  - Consider sensitive information before publishing
+#### Security Features
+- **Data Protection**:
+  - Secure session storage
+  - HTTP-only cookies
+  - JWT token encryption
+  - Role-based resource access
 
 #### Implementation Details
 - **Data Layer**: MongoDB with public access
@@ -28,16 +32,31 @@
   - Regular security audits essential
   - Content moderation may be needed
 
+### Authentication Routes
+- **Location**: `/app/auth`
+- **Role**: Handles authentication flows
+- **Dependencies**: NextAuth.js
+- **Status**: Active
+- **Components**:
+  - Sign-in page
+  - Error handling page
+  - Session management
+  - Authentication callbacks
+
 ### Frontend (Next.js App Router)
 - **Role**: Main application interface
-- **Dependencies**: React, Next.js
+- **Dependencies**: React, Next.js 14.2.30
 - **Status**: Active
+- **Features**:
+  - API Routes with proper TypeScript support
+  - Enhanced error handling and validation
+  - Standardized response types across endpoints
 
 #### Component Architecture
 - **Client Components**:
   - Location: `/components/client`
   - Purpose: Interactive UI elements
-  - Examples: Navigation, ErrorBoundary, ImageUploader
+  - Examples: Navigation, ErrorBoundary
   - Features:
     - Marked with 'use client'
     - Handle user interactions
@@ -73,7 +92,7 @@
 
 ### Project Management System
 - **Role**: Handles project data and operations
-- **Dependencies**: MongoDB, TypeScript
+- **Dependencies**: MongoDB 5.9.0, Mongoose 7.6.0
 - **Status**: Active
 - **Components**:
   - Project Model with validation
@@ -96,10 +115,16 @@ graph TD
     C --> D[Data Layer]
 ```
 
-## Technical Stack
+### Technical Stack
+
+### Authentication
+- NextAuth.js (Latest)
+- MongoDB Adapter
+- JWT Session Strategy
+- Custom Authentication Providers
 
 ### Frontend
-- Next.js 15.3.4 (App Router)
+- Next.js 14.0.4 (App Router)
 - React
 - TypeScript
 
@@ -163,7 +188,9 @@ interface Project {
 ### API Route Handler Implementation
 - **Type Safety**: Uses NextRequest from next/server
 - **Parameter Handling**: Extracts dynamic parameters from request.nextUrl.pathname
-- **Error Handling**: Consistent error responses with timestamps
+- **Error Handling**: Enhanced error handling with specific error types and timestamps
+- **Authentication**: Unified authentication middleware with role and permission checks
+- **Security**: Rate limiting and comprehensive request validation
 
 ### API Endpoints
 
@@ -251,8 +278,9 @@ DELETE /api/projects/[id]
   - Description (optional): Detailed information
 - **Service Features**:
   - Transaction-safe deletion of organizations and projects
-  - Enhanced error handling with specific error types
-  - Comprehensive logging for debugging and tracing
+- Enhanced error handling with specific error types
+- Session interface extension with extendable fields
+- Full TypeScript type support
   - ID validation before operations
   - Detailed operation status reporting
   - Type-safe deletion tracking with MongoDB DeleteResult interface
@@ -291,7 +319,6 @@ DELETE /api/projects/[id]
     - allowDownloads: boolean
     - allowedFileTypes: string[]
   - Metadata (auto-initialized):
-    - totalImages: number
     - lastActivity: Date
     - tags: string[]
     - contributors: string[]
@@ -326,17 +353,6 @@ DELETE /api/projects/[id]
     - Unified grid systems
     - Standard spacing patterns
 
-### Builder Module
-- **Location**: `/app/builder`
-- **Role**: Mosaic creation and editing interface
-- **Components**:
-  - Builder-specific layout with specialized tools
-  - ImageUploader for asset management
-  - Canvas management system
-  - State management for undo/redo
-- **Interactions**:
-  - Projects Module: Loads and saves project content
-  - Organizations Module: Checks editing permissions
 
 ### Navigation Component
 - **Role**: Primary application navigation system

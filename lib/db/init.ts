@@ -28,8 +28,10 @@ async function dbConnect() {
     if (!cached.promise) {
       const opts = {
         bufferCommands: false,
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 30000,
         socketTimeoutMS: 45000,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
       };
 
       console.log(`Connecting to MongoDB in ${process.env.NODE_ENV} mode...`);

@@ -10,6 +10,9 @@ export interface CreateProjectInput {
   status: 'active' | 'archived';
 }
 
+// Export individual methods for direct use
+export const updateProject = (id: string, data: Partial<ProjectType>) => ProjectService.updateProject(id, data);
+
 export class ProjectService {
   static async getProject(id: string): Promise<ProjectType | null> {
     try {
@@ -93,12 +96,20 @@ const isSlugUnique = await AssociationClient.validateProjectSlug(
     }
   }
 
-  static async deleteProject(id: string): Promise<boolean> {
+  static async deleteProject(id: string, organizationId?: string): Promise<boolean> {
     try {
       // Get project details first to check if it exists
       const project = await this.getProject(id);
       if (!project) {
         throw new Error('Project not found');
+      }
+
+      // If organizationId is provided, verify ownership
+      if (organizationId) {
+        const belongsToOrg = project.organizationId === organizationId;
+        if (!belongsToOrg) {
+          throw new Error('Project does not belong to this organization');
+        }
       }
 
       const response = await fetch(`/api/projects/${id}`, {

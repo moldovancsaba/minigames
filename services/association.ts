@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
-import { connectToDatabase } from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/database';
 import type { ProjectType } from '@/app/types/index';
-import type { Organization } from '@/models/organization';
+import type { Organization } from '@/app/types/organization';
 
 /**
  * Service for managing relationships between organizations and projects
@@ -49,7 +49,7 @@ export class AssociationService {
     if (status) query.status = status;
     if (visibility) query.visibility = visibility;
 
-    const [projects, total] = await Promise.all([
+    const [projectDocs, total] = await Promise.all([
       collection
         .find(query)
         .sort({ [sort]: order === 'desc' ? -1 : 1 })
@@ -58,6 +58,20 @@ export class AssociationService {
         .toArray(),
       collection.countDocuments(query)
     ]);
+
+    const projects: ProjectType[] = projectDocs.map(doc => ({
+      _id: doc._id.toString(),
+      name: doc.name,
+      slug: doc.slug,
+      description: doc.description,
+      organizationId: doc.organizationId.toString(),
+      visibility: doc.visibility,
+      status: doc.status,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+      settings: doc.settings,
+      metadata: doc.metadata
+    }));
 
     return { projects, total };
   }
@@ -130,7 +144,15 @@ export class AssociationService {
     }
 
     const orgCollection = await this.getOrganizationCollection();
-    return orgCollection.findOne({ _id: project.organizationId });
+    const orgDoc = await orgCollection.findOne({ _id: project.organizationId });
+    if (!orgDoc) return null;
+    return {
+      _id: orgDoc._id.toString(),
+      name: orgDoc.name,
+      description: orgDoc.description || '',
+      createdAt: orgDoc.createdAt.toISOString(),
+      updatedAt: orgDoc.updatedAt.toISOString()
+    };
   }
 
   /**

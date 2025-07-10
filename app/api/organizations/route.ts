@@ -1,94 +1,68 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import dbConnect from '@/lib/db/init';
 import { OrganizationModel } from '@/lib/mongodb/organizationModel';
-import {
-  publicApiMiddleware,
-  formatApiResponse,
-  applyCorsHeaders,
-  createRequestMetadata,
-  checkRateLimit
-} from '@/middleware/api';
+import { generateSlug } from '@/lib/utils/slug';
 
-// GET /api/organizations
-export async function GET(request: NextRequest) {
-  // Apply public API middleware
-  const middlewareResponse = await publicApiMiddleware(request);
-  if (middlewareResponse) return middlewareResponse;
-
-  // Get request metadata for rate limiting
-  const metadata = createRequestMetadata(request);
-  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
-
+export async function GET() {
   try {
+    await dbConnect();
     const organizations = await OrganizationModel.findAll();
-    return applyCorsHeaders(
-      formatApiResponse(organizations, null, 200, rateLimitInfo)
-    );
+    
+    return NextResponse.json({
+      success: true,
+      data: organizations
+    });
   } catch (error: any) {
     console.error('Failed to fetch organizations:', error);
-    return applyCorsHeaders(
-      formatApiResponse(
-        null,
-        error.message || 'Failed to fetch organizations',
-        500,
-        rateLimitInfo
-      )
-    );
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to fetch organizations'
+    }, { status: 500 });
   }
 }
 
-// POST /api/organizations
 export async function POST(request: NextRequest) {
-  // Apply public API middleware
-  const middlewareResponse = await publicApiMiddleware(request);
-  if (middlewareResponse) return middlewareResponse;
-
-  // Get request metadata for rate limiting
-  const metadata = createRequestMetadata(request);
-  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
-
   try {
+    await dbConnect();
     const data = await request.json();
     
-    if (!data.name) {
-      return applyCorsHeaders(
-        formatApiResponse(
-          null,
-          'Organization name is required',
-          400,
-          rateLimitInfo
-        )
-      );
+    // Validate required fields
+    if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Organization name is required'
+      }, { status: 400 });
     }
 
-    // Auto-generate slug if not provided
-    if (!data.slug) {
-      data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    // Generate a slug from the name
+    const baseSlug = generateSlug(data.name);
+    
+    // Find a unique slug by appending numbers if necessary
+    let slug = baseSlug;
+    let counter = 1;
+    while (!(await OrganizationModel.validateSlug(slug))) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
     }
 
-    // Create organization with defaults
+    // Create organization with validated data
     const organization = await OrganizationModel.create({
-      name: data.name,
-      slug: data.slug,
-      description: data.description || '',
-      status: 'active',
-      settings: {
-        allowPublicProjects: true,
-        defaultProjectVisibility: 'public'
-      }
+      name: data.name.trim(),
+      slug,
+      description: data.description?.trim()
     });
 
-    return applyCorsHeaders(
-      formatApiResponse(organization, null, 201, rateLimitInfo)
-    );
+    // Return the created organization
+    return NextResponse.json({
+      success: true,
+      data: organization
+    }, { status: 201 });
   } catch (error: any) {
     console.error('Organization creation error:', error);
-    return applyCorsHeaders(
-      formatApiResponse(
-        null,
-        error.message || 'Failed to create organization',
-        500,
-        rateLimitInfo
-      )
-    );
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to create organization'
+    }, { status: 500 });
   }
 }
+

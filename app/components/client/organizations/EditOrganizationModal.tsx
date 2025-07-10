@@ -2,16 +2,14 @@
 
 import { Modal } from '@/components/shared/Modal';
 import OrganizationForm from './OrganizationForm';
-import { Organization } from '@/services/organizationService';
+import type { Organization } from '@/app/types/organization';
 
 interface EditOrganizationModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (organization: {
     name: string;
-    slug: string;
     description: string;
-    status: 'active' | 'inactive' | 'archived';
   }) => Promise<void>;
   organization: Organization;
 }
@@ -27,14 +25,10 @@ export function EditOrganizationModal({
       <OrganizationForm
         initialData={{
           name: organization.name,
-          slug: organization.slug,
           description: organization.description || ''
         }}
         onSubmit={async (data) => {
-          await onSubmit({
-            ...data,
-            status: organization.status
-          });
+          await onSubmit(data);
         }}
         onCancel={onClose}
       />

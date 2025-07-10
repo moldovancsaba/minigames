@@ -1,5 +1,5 @@
 import { Db } from 'mongodb';
-import { organizationSchema } from './organization';
+import { organizationSchema } from '../schemas/organization';
 import { projectSchema } from './project';
 
 export async function initializeCollections(db: Db) {

@@ -1,95 +1,39 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ProjectModel } from '@/lib/mongodb/projectModel';
 import { OrganizationModel } from '@/lib/mongodb/organizationModel';
-import { validateObjectId } from '@/middleware/validation';
-import {
+import { 
   publicApiMiddleware,
-  formatApiResponse,
-  applyCorsHeaders,
   createRequestMetadata,
-  checkRateLimit
+  checkRateLimit,
+  applyCorsHeaders,
+  formatApiResponse
 } from '@/middleware/api';
+import { validateObjectId } from '@/lib/utils/validation';
 
 /**
  * GET /api/projects
  * List all projects with filtering and pagination
  */
 export async function GET(request: NextRequest) {
-  // Apply public API middleware
-  const middlewareResponse = await publicApiMiddleware(request);
-  if (middlewareResponse) return middlewareResponse;
-
-  // Get request metadata for rate limiting
-  const metadata = createRequestMetadata(request);
-  const rateLimitInfo = await checkRateLimit(metadata.ip, 'default');
-
   try {
     const searchParams = request.nextUrl.searchParams;
+    const organizationId = searchParams.get('organizationId');
     
-    // Parse query parameters
-    const options = {
-      organizationId: searchParams.get('organizationId') || undefined,
-      visibility: searchParams.get('visibility') as 'public' | 'private' | undefined,
-      status: searchParams.get('status') as 'active' | 'archived' | undefined,
-      page: searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : undefined,
-      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined,
-      tags: searchParams.get('tags')?.split(',') || undefined
-    };
-
-    // Validate numeric parameters
-    if (options.page !== undefined && isNaN(options.page)) {
-      return applyCorsHeaders(
-        formatApiResponse(
-          null,
-          'Invalid page parameter',
-          400,
-          rateLimitInfo
-        )
-      );
-    }
-
-    if (options.limit !== undefined && isNaN(options.limit)) {
-      return applyCorsHeaders(
-        formatApiResponse(
-          null,
-          'Invalid limit parameter',
-          400,
-          rateLimitInfo
-        )
-      );
-    }
-
     // If organizationId is provided, get projects for that organization
-    const projects = options.organizationId
-      ? await ProjectModel.findByOrganization(options.organizationId)
-      : [];
+    const projects = organizationId
+      ? await ProjectModel.findByOrganization(organizationId)
+      : await ProjectModel.findAll();
     
-    const result = {
-      projects,
-      total: projects.length,
-      page: options.page || 1,
-      limit: options.limit || 10
-    };
-
-    return applyCorsHeaders(
-      formatApiResponse(result, null, 200, rateLimitInfo)
-    );
-  } catch (error: any) {
-    console.error('Failed to list projects:', {
-      message: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-      operation: 'list_projects'
+    return NextResponse.json({
+      success: true,
+      data: projects
     });
-
-    return applyCorsHeaders(
-      formatApiResponse(
-        null,
-        error.message || 'Failed to list projects',
-        500,
-        rateLimitInfo
-      )
-    );
+  } catch (error: any) {
+    console.error('Failed to list projects:', error);
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Failed to list projects'
+    }, { status: 500 });
   }
 }
 
