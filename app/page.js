@@ -789,33 +789,51 @@ export default function HomePage() {
           </header>
 
           <div className="wheel-stage">
-            <div className="wheel-pointer" />
-            <div
-              className={`wheel-disc ${wheelIsSpinning ? 'wheel-disc-spinning' : ''}`}
-              style={{
-                width: `${wheelSize}px`,
-                height: `${wheelSize}px`,
-                transform: `rotate(${wheelRotation}deg)`
-              }}
-            >
-              <div className="wheel-face" />
-              {wheelSections.map((section, index) => {
-                const angle = index * (360 / WHEEL_SECTIONS) + 30;
-                return (
-                  <div
-                    key={section.id}
-                    className="wheel-label"
-                    style={{ transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-38%)` }}
-                  >
-                    <span>{PRIZE_DEFINITIONS[section.prize].emoji}</span>
-                    <strong>{PRIZE_DEFINITIONS[section.prize].label}</strong>
-                  </div>
-                );
-              })}
+            <div className="wheel-stage-shell">
+              <div className="wheel-wrap" style={{ width: `${wheelSize}px`, height: `${wheelSize}px` }}>
+                <div className="wheel-pointer" />
+                <div
+                  className={`wheel-disc ${wheelIsSpinning ? 'wheel-disc-spinning' : ''}`}
+                  style={{
+                    transform: `rotate(${wheelRotation}deg)`
+                  }}
+                >
+                  <div className="wheel-face" />
+                  <div className="wheel-face-glow" />
+                  <div className="wheel-ring wheel-ring-outer" />
+                  <div className="wheel-ring wheel-ring-inner" />
+                  {Array.from({ length: WHEEL_SECTIONS }).map((_, index) => (
+                    <div
+                      key={`divider-${index}`}
+                      className="wheel-divider"
+                      style={{ transform: `translateX(-50%) rotate(${index * 60}deg)` }}
+                    />
+                  ))}
+                  {wheelSections.map((section, index) => {
+                    const segment = 360 / WHEEL_SECTIONS;
+                    const angleDeg = -90 + index * segment + segment / 2;
+                    const radians = (angleDeg * Math.PI) / 180;
+                    const radiusPercent = 34;
+                    const left = 50 + Math.cos(radians) * radiusPercent;
+                    const top = 50 + Math.sin(radians) * radiusPercent;
 
-              <button className="wheel-spin-button" onClick={spinWheel} disabled={wheelIsSpinning || wheelIsComplete}>
-                {wheelIsSpinning ? 'Spinning...' : 'SPIN'}
-              </button>
+                    return (
+                      <div
+                        key={section.id}
+                        className="wheel-label"
+                        style={{ left: `${left}%`, top: `${top}%` }}
+                      >
+                        <span>{PRIZE_DEFINITIONS[section.prize].emoji}</span>
+                        <strong>{PRIZE_DEFINITIONS[section.prize].label}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button className="wheel-spin-button" onClick={spinWheel} disabled={wheelIsSpinning || wheelIsComplete}>
+                  {wheelIsSpinning ? 'Spinning...' : 'SPIN'}
+                </button>
+              </div>
             </div>
           </div>
 
