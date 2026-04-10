@@ -86,22 +86,23 @@ function calculateCardFrame(mode, orientation) {
 function calculateScratchCell(orientation) {
   const width = typeof window === 'undefined' ? 390 : window.innerWidth;
   const height = typeof window === 'undefined' ? 844 : window.innerHeight;
-  const horizontalPadding = 52;
-  const verticalChrome = orientation === 'landscape' ? 240 : 320;
+  const sidePaddingRatio = orientation === 'landscape' ? 3 / 16 : 1 / 12;
+  const horizontalPadding = Math.floor(width * sidePaddingRatio * 2);
+  const verticalChrome = orientation === 'landscape' ? 230 : 310;
 
   if (orientation === 'landscape') {
-    const maxBoardWidth = Math.max(270, Math.min(480, width - horizontalPadding - 180));
-    const maxBoardHeight = Math.max(270, Math.min(460, height - verticalChrome));
+    const maxBoardWidth = Math.max(270, Math.min(620, width - horizontalPadding));
+    const maxBoardHeight = Math.max(270, Math.min(500, height - verticalChrome));
     const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
 
-    return Math.max(82, side);
+    return Math.max(86, side);
   }
 
-  const maxBoardHeight = Math.max(258, Math.min(500, height - verticalChrome));
-  const maxBoardWidth = Math.max(258, Math.min(500, width - horizontalPadding));
+  const maxBoardHeight = Math.max(258, Math.min(560, height - verticalChrome));
+  const maxBoardWidth = Math.max(258, Math.min(560, width - horizontalPadding));
   const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
 
-  return Math.max(80, side);
+  return Math.max(88, side);
 }
 
 function createVoteSession(shortlisted) {
@@ -451,7 +452,13 @@ export default function HomePage() {
   const scratchRevealedTiles = scratchTiles.filter((tile) => revealedScratchTileIds.includes(tile.id));
   const scratchIsComplete = revealedScratchTileIds.length >= SCRATCH_REVEAL_LIMIT;
   const scratchDidWin =
-    scratchIsComplete && new Set(scratchRevealedTiles.map((tile) => tile.prize)).size === 1;
+    scratchIsComplete &&
+    Object.values(
+      scratchRevealedTiles.reduce((accumulator, tile) => {
+        accumulator[tile.prize] = (accumulator[tile.prize] || 0) + 1;
+        return accumulator;
+      }, {})
+    ).some((count) => count >= 3);
 
   function resetGame() {
     setScreen('start');
@@ -674,7 +681,7 @@ export default function HomePage() {
             <div className="hud-copy">
               <h2>Scratch exactly 4 tiles</h2>
               <p>
-                Reveal four hidden gifts. Win if all four match: Free Ticket or Free Apple.
+                Reveal four hidden gifts. Win when at least three match: Free Ticket or Free Apple.
               </p>
             </div>
             <div className="progress-pill">
