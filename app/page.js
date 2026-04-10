@@ -70,8 +70,9 @@ function calculateCardFrame(mode, orientation, layoutBox = null) {
         return fitCardToBox((layoutBox.width - 84) / 2, layoutBox.height * 0.92, 145, 190);
       }
 
-      // Portrait vote must fit two cards + VS pill even with browser UI visible
-      return fitCardToBox(layoutBox.width * 0.78, (layoutBox.height - 72) / 2, 96, 126);
+      // Portrait vote must fit two cards + optional VS on small mobile Safari viewports.
+      // Keep a conservative envelope to avoid clipping when browser chrome reduces space.
+      return fitCardToBox(layoutBox.width * 0.64, (layoutBox.height - 36) / 2, 74, 96);
     }
   }
 
