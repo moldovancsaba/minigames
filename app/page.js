@@ -13,6 +13,17 @@ const CARD_IMAGES = Array.from({ length: 17 }, (_, index) => {
   };
 });
 
+const SCRATCH_PRIZES = {
+  ticket: {
+    label: 'Free Ticket',
+    emoji: '🎟️'
+  },
+  apple: {
+    label: 'Free Apple',
+    emoji: '🍎'
+  }
+};
+
 function shuffle(items) {
   const copy = [...items];
 
@@ -24,58 +35,27 @@ function shuffle(items) {
   return copy;
 }
 
+function createScratchTiles() {
+  const basePrizes = [
+    ...Array.from({ length: 5 }, () => 'ticket'),
+    ...Array.from({ length: 4 }, () => 'apple')
+  ];
+
+  return shuffle(basePrizes).map((prize, index) => ({
+    id: `scratch-${index + 1}`,
+    prize
+  }));
+}
+
 function getOrientation() {
   if (typeof window === 'undefined') {
     return 'portrait';
   }
 
-  return window.innerWidth >= window.innerHeight ? 'landscape' : 'portrait';
+  return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
 }
 
-function fitCardToBox(maxWidth, maxHeight, minWidth = 170, minHeight = 220) {
-  const aspectRatio = 0.76;
-  const safeWidth = Math.max(0, maxWidth);
-  const safeHeight = Math.max(0, maxHeight);
-
-  if (safeWidth === 0 || safeHeight === 0) {
-    return { width: minWidth, height: minHeight };
-  }
-
-  let width = Math.min(safeWidth, safeHeight * aspectRatio);
-  let height = width / aspectRatio;
-
-  if (height > safeHeight) {
-    height = safeHeight;
-    width = height * aspectRatio;
-  }
-
-  return {
-    width: Math.max(minWidth, Math.floor(width)),
-    height: Math.max(minHeight, Math.floor(height))
-  };
-}
-
-function calculateCardFrame(mode, orientation, layoutBox = null) {
-  if (layoutBox) {
-    if (mode === 'swipe') {
-      if (orientation === 'landscape') {
-        return fitCardToBox(layoutBox.width * 0.58, layoutBox.height * 0.9, 150, 200);
-      }
-
-      return fitCardToBox(layoutBox.width * 0.9, layoutBox.height * 0.78, 150, 200);
-    }
-
-    if (mode === 'vote') {
-      if (orientation === 'landscape') {
-        return fitCardToBox((layoutBox.width - 84) / 2, layoutBox.height * 0.92, 145, 190);
-      }
-
-      // Portrait vote must fit two cards + optional VS on small mobile Safari viewports.
-      // Keep a conservative envelope to avoid clipping when browser chrome reduces space.
-      return fitCardToBox(layoutBox.width * 0.64, (layoutBox.height - 36) / 2, 74, 96);
-    }
-  }
-
+function calculateCardFrame(mode, orientation) {
   const width = typeof window === 'undefined' ? 390 : window.innerWidth;
   const height = typeof window === 'undefined' ? 844 : window.innerHeight;
   const safePadding = 24;
@@ -100,6 +80,27 @@ function calculateCardFrame(mode, orientation, layoutBox = null) {
     width: Math.max(170, Math.min(maxWidth, Math.floor(stackedHeight * 0.76))),
     height: Math.max(220, Math.min(stackedHeight, Math.floor(maxWidth / 0.76)))
   };
+}
+
+function calculateScratchCell(orientation) {
+  const width = typeof window === 'undefined' ? 390 : window.innerWidth;
+  const height = typeof window === 'undefined' ? 844 : window.innerHeight;
+  const safePadding = 24;
+
+  if (orientation === 'landscape') {
+    const maxBoardWidth = Math.max(270, Math.min(420, width * 0.52));
+    const maxBoardHeight = Math.max(270, Math.min(420, height - safePadding * 2 - 180));
+    const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
+
+    return Math.max(82, side);
+  }
+
+  const availableHeight = height - safePadding * 2 - 240;
+  const maxBoardHeight = Math.max(258, Math.min(450, availableHeight));
+  const maxBoardWidth = Math.max(258, Math.min(450, width * 0.92));
+  const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
+
+  return Math.max(86, side);
 }
 
 function createVoteSession(shortlisted) {
@@ -223,26 +224,6 @@ function getVotePair(session) {
   };
 }
 
-async function enterImmersiveMode() {
-  if (typeof document === 'undefined') {
-    return;
-  }
-
-  const root = document.documentElement;
-
-  try {
-    if (!document.fullscreenElement && root.requestFullscreen) {
-      await root.requestFullscreen({ navigationUI: 'hide' });
-    }
-  } catch {}
-
-  try {
-    if (window.screen?.orientation?.lock) {
-      await window.screen.orientation.lock(getOrientation());
-    }
-  } catch {}
-}
-
 function CardView({ card, cardSize, swipeDx = 0, animate = false, onPointerDown, onPointerMove, onPointerUp, showHint = false }) {
   return (
     <div
@@ -268,6 +249,165 @@ function CardView({ card, cardSize, swipeDx = 0, animate = false, onPointerDown,
   );
 }
 
+function ScratchTile({ tile, size, disabled = false, onRevealed }) {
+  const canvasRef = useRef(null);
+  const pointerIdRef = useRef(null);
+  const drawingRef = useRef(false);
+  const revealedRef = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    revealedRef.current = false;
+    const dpr = window.devicePixelRatio || 1;
+    const width = Math.floor(size * dpr);
+    const height = Math.floor(size * dpr);
+
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.scale(dpr, dpr);
+    context.clearRect(0, 0, size, size);
+
+    const gradient = context.createLinearGradient(0, 0, size, size);
+    gradient.addColorStop(0, '#dde2e6');
+    gradient.addColorStop(0.45, '#aeb7bf');
+    gradient.addColorStop(1, '#8f98a3');
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, size, size);
+
+    context.globalAlpha = 0.2;
+    for (let index = 0; index < 95; index += 1) {
+      const noiseSize = 3 + Math.random() * 8;
+      context.fillStyle = index % 2 === 0 ? '#f8fbff' : '#6a7480';
+      context.fillRect(Math.random() * size, Math.random() * size, noiseSize, noiseSize);
+    }
+    context.globalAlpha = 1;
+    context.globalCompositeOperation = 'destination-out';
+  }, [size, tile.id]);
+
+  function scratchAt(event) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    context.beginPath();
+    context.arc(x, y, Math.max(16, size * 0.12), 0, Math.PI * 2);
+    context.fill();
+  }
+
+  function checkRevealed() {
+    if (revealedRef.current) {
+      return;
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) {
+      return;
+    }
+
+    const sampleStep = 8;
+    const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let transparentPixels = 0;
+    let samples = 0;
+
+    for (let y = 0; y < canvas.height; y += sampleStep) {
+      for (let x = 0; x < canvas.width; x += sampleStep) {
+        const alpha = data[(y * canvas.width + x) * 4 + 3];
+        if (alpha < 18) {
+          transparentPixels += 1;
+        }
+        samples += 1;
+      }
+    }
+
+    if (samples > 0 && transparentPixels / samples >= 0.46) {
+      revealedRef.current = true;
+      onRevealed(tile.id);
+    }
+  }
+
+  function onPointerDown(event) {
+    if (disabled || revealedRef.current) {
+      return;
+    }
+
+    pointerIdRef.current = event.pointerId;
+    drawingRef.current = true;
+
+    try {
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    } catch {}
+
+    scratchAt(event);
+  }
+
+  function onPointerMove(event) {
+    if (disabled || !drawingRef.current || pointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    scratchAt(event);
+  }
+
+  function onPointerUp(event) {
+    if (pointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    drawingRef.current = false;
+    pointerIdRef.current = null;
+
+    try {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    } catch {}
+
+    checkRevealed();
+  }
+
+  return (
+    <div className={`scratch-tile ${disabled ? 'scratch-tile-disabled' : ''}`}>
+      <div className="scratch-reward">
+        <div className="scratch-emoji">{SCRATCH_PRIZES[tile.prize].emoji}</div>
+        <div className="scratch-label">{SCRATCH_PRIZES[tile.prize].label}</div>
+      </div>
+      <canvas
+        ref={canvasRef}
+        className="scratch-overlay"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      />
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [orientation, setOrientation] = useState('portrait');
   const [screen, setScreen] = useState('start');
@@ -278,122 +418,38 @@ export default function HomePage() {
   const [voteSession, setVoteSession] = useState(null);
   const [swipeDx, setSwipeDx] = useState(0);
   const [dragAnimating, setDragAnimating] = useState(false);
-  const [layoutBox, setLayoutBox] = useState(null);
+  const [scratchTiles, setScratchTiles] = useState([]);
+  const [revealedScratchTileIds, setRevealedScratchTileIds] = useState([]);
 
   const pointerIdRef = useRef(null);
   const startXRef = useRef(0);
-  const swipePanelRef = useRef(null);
-  const swipeHudRef = useRef(null);
-  const swipeStageRef = useRef(null);
-  const votePanelRef = useRef(null);
-  const voteHudRef = useRef(null);
 
   useEffect(() => {
     const update = () => setOrientation(getOrientation());
-    const refreshViewportMetrics = () => {
-      const visualHeight = window.visualViewport?.height || window.innerHeight;
-      const visualWidth = window.visualViewport?.width || window.innerWidth;
-      const browserUiOffset = Math.max(0, window.innerHeight - visualHeight);
-
-      document.documentElement.style.setProperty('--app-height', `${Math.round(visualHeight)}px`);
-      document.documentElement.style.setProperty('--app-width', `${Math.round(visualWidth)}px`);
-      document.documentElement.style.setProperty('--browser-ui-offset', `${Math.round(browserUiOffset)}px`);
-    };
-    const minimizeBrowserChrome = () => {
-      refreshViewportMetrics();
-      window.setTimeout(() => window.scrollTo(0, 1), 0);
-      window.setTimeout(() => window.scrollTo(0, 0), 60);
-    };
 
     update();
-    refreshViewportMetrics();
-    minimizeBrowserChrome();
-
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-
     window.addEventListener('resize', update);
-    window.addEventListener('resize', refreshViewportMetrics);
     window.addEventListener('orientationchange', update);
-    window.addEventListener('orientationchange', minimizeBrowserChrome);
-    window.addEventListener('load', minimizeBrowserChrome);
-    window.addEventListener('pageshow', minimizeBrowserChrome);
-    window.visualViewport?.addEventListener('resize', refreshViewportMetrics);
-    window.visualViewport?.addEventListener('scroll', refreshViewportMetrics);
 
     const preventGesture = (event) => event.preventDefault();
     document.addEventListener('gesturestart', preventGesture);
 
     return () => {
       window.removeEventListener('resize', update);
-      window.removeEventListener('resize', refreshViewportMetrics);
       window.removeEventListener('orientationchange', update);
-      window.removeEventListener('orientationchange', minimizeBrowserChrome);
-      window.removeEventListener('load', minimizeBrowserChrome);
-      window.removeEventListener('pageshow', minimizeBrowserChrome);
-      window.visualViewport?.removeEventListener('resize', refreshViewportMetrics);
-      window.visualViewport?.removeEventListener('scroll', refreshViewportMetrics);
       document.removeEventListener('gesturestart', preventGesture);
     };
   }, []);
 
-  useEffect(() => {
-    const measureLayout = () => {
-      if (screen === 'swipe' && swipePanelRef.current) {
-        const stageRect = swipeStageRef.current?.getBoundingClientRect();
-
-        setLayoutBox({
-          width: stageRect?.width || swipePanelRef.current.getBoundingClientRect().width,
-          height: Math.max(0, stageRect?.height || 0)
-        });
-        return;
-      }
-
-      if (screen === 'vote' && votePanelRef.current) {
-        const panelRect = votePanelRef.current.getBoundingClientRect();
-        const hudRect = voteHudRef.current?.getBoundingClientRect();
-        const stageHeight = panelRect.height - (hudRect?.height || 0) - 12;
-
-        setLayoutBox({
-          width: panelRect.width,
-          height: Math.max(0, stageHeight)
-        });
-        return;
-      }
-
-      setLayoutBox(null);
-    };
-
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureLayout);
-    const activeElements =
-      screen === 'swipe'
-        ? [swipePanelRef.current, swipeHudRef.current, swipeStageRef.current]
-        : screen === 'vote'
-          ? [votePanelRef.current, voteHudRef.current]
-          : [];
-
-    activeElements.forEach((element) => {
-      if (element && observer) {
-        observer.observe(element);
-      }
-    });
-
-    measureLayout();
-    window.addEventListener('resize', measureLayout);
-    window.addEventListener('orientationchange', measureLayout);
-
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener('resize', measureLayout);
-      window.removeEventListener('orientationchange', measureLayout);
-    };
-  }, [screen, orientation]);
-
   const mode = screen === 'vote' ? 'vote' : screen === 'results' ? 'results' : 'swipe';
-  const cardSize = useMemo(() => calculateCardFrame(mode, orientation, layoutBox), [layoutBox, mode, orientation]);
+  const cardSize = useMemo(() => calculateCardFrame(mode, orientation), [mode, orientation]);
   const currentCard = deck[swipeIndex] ?? null;
   const votePair = getVotePair(voteSession);
+  const scratchCellSize = useMemo(() => calculateScratchCell(orientation), [orientation]);
+  const scratchRevealedTiles = scratchTiles.filter((tile) => revealedScratchTileIds.includes(tile.id));
+  const scratchIsComplete = revealedScratchTileIds.length >= 3;
+  const scratchDidWin =
+    scratchIsComplete && new Set(scratchRevealedTiles.map((tile) => tile.prize)).size === 1;
 
   function resetGame() {
     setScreen('start');
@@ -404,16 +460,42 @@ export default function HomePage() {
     setVoteSession(null);
     setSwipeDx(0);
     setDragAnimating(false);
+    setScratchTiles([]);
+    setRevealedScratchTileIds([]);
   }
 
-  async function startGame() {
-    await enterImmersiveMode();
+  function startSwipeGame() {
     setDeck(shuffle(CARD_IMAGES));
     setSwipeIndex(0);
     setShortlisted([]);
     setResults([]);
     setVoteSession(null);
+    setScratchTiles([]);
+    setRevealedScratchTileIds([]);
     setScreen('swipe');
+  }
+
+  function startScratchGame() {
+    setDeck([]);
+    setSwipeIndex(0);
+    setShortlisted([]);
+    setResults([]);
+    setVoteSession(null);
+    setSwipeDx(0);
+    setDragAnimating(false);
+    setScratchTiles(createScratchTiles());
+    setRevealedScratchTileIds([]);
+    setScreen('scratch');
+  }
+
+  function revealScratchTile(tileId) {
+    setRevealedScratchTileIds((current) => {
+      if (current.includes(tileId) || current.length >= 3) {
+        return current;
+      }
+
+      return [...current, tileId];
+    });
   }
 
   function finishSwipe(finalShortlist) {
@@ -563,21 +645,84 @@ export default function HomePage() {
     >
       {screen === 'start' ? (
         <section className="panel start-panel">
-          <div className="headline-chip">Kids Swipe Game</div>
-          <h1>Swipe cards, then choose the winners.</h1>
+          <div className="headline-chip">Minigames</div>
+          <h1>Choose a game and start playing.</h1>
           <p>
-            The game follows Narimato&apos;s business flow: first you keep or skip cards,
-            then your kept cards are compared head-to-head until a final ranking is built.
+            Swipe keeps your favorite cards and ranks them. Scratch reveals three rewards from
+            a silver ticket grid to find a matching prize.
           </p>
-          <button className="primary-button" onClick={startGame}>
-            Start
-          </button>
+          <div className="start-action-row">
+            <button className="primary-button" onClick={startSwipeGame}>
+              Play Swipe
+            </button>
+            <button className="primary-button primary-button-alt" onClick={startScratchGame}>
+              Play Scratch
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {screen === 'scratch' ? (
+        <section className="panel scratch-panel">
+          <header className="hud scratch-hud">
+            <div className="headline-chip">Scratch Round</div>
+            <div className="hud-copy">
+              <h2>Scratch exactly 3 tiles</h2>
+              <p>
+                Reveal three hidden gifts. Win if all three match: Free Ticket or Free Apple.
+              </p>
+            </div>
+            <div className="progress-pill">
+              {revealedScratchTileIds.length} / 3
+            </div>
+          </header>
+
+          <div
+            className={`scratch-grid scratch-grid-${orientation}`}
+            style={{
+              gridTemplateColumns: `repeat(3, ${scratchCellSize}px)`,
+              gridAutoRows: `${scratchCellSize}px`
+            }}
+          >
+            {scratchTiles.map((tile) => (
+              <ScratchTile
+                key={tile.id}
+                tile={tile}
+                size={scratchCellSize}
+                disabled={scratchIsComplete || revealedScratchTileIds.includes(tile.id)}
+                onRevealed={revealScratchTile}
+              />
+            ))}
+          </div>
+
+          <footer className="scratch-footer">
+            {scratchIsComplete ? (
+              <div className={`scratch-result ${scratchDidWin ? 'scratch-result-win' : 'scratch-result-lose'}`}>
+                {scratchDidWin ? (
+                  <span>You won: {SCRATCH_PRIZES[scratchRevealedTiles[0].prize].label}</span>
+                ) : (
+                  <span>No match this round. Try again.</span>
+                )}
+              </div>
+            ) : (
+              <div className="scratch-result scratch-result-neutral">Keep scratching until 3 tiles are revealed.</div>
+            )}
+
+            <div className="scratch-buttons">
+              <button className="secondary-button" onClick={resetGame}>
+                Back
+              </button>
+              <button className="primary-button" onClick={startScratchGame}>
+                New Scratch
+              </button>
+            </div>
+          </footer>
         </section>
       ) : null}
 
       {screen === 'swipe' && currentCard ? (
-        <section className="game-panel" ref={swipePanelRef}>
-          <header className="hud" ref={swipeHudRef}>
+        <section className="game-panel">
+          <header className="hud">
             <div className="headline-chip">Swipe Round</div>
             <div className="hud-copy">
               <h2>Keep the cards you like</h2>
@@ -590,41 +735,41 @@ export default function HomePage() {
             </div>
           </header>
 
-          <div className={`swipe-stage swipe-stage-${orientation}`} ref={swipeStageRef}>
-            <button className="choice-button choice-button-left swipe-side-button" onClick={() => animateSwipe('left')}>
+          <div className="center-stage">
+            <CardView
+              card={currentCard}
+              cardSize={cardSize}
+              swipeDx={swipeDx}
+              animate={dragAnimating}
+              onPointerDown={onCardPointerDown}
+              onPointerMove={onCardPointerMove}
+              onPointerUp={onCardPointerUp}
+              showHint
+            />
+          </div>
+
+          <footer className="action-row">
+            <button className="choice-button choice-button-left" onClick={() => animateSwipe('left')}>
               Skip
             </button>
-
-            <div className="center-stage">
-              <CardView
-                card={currentCard}
-                cardSize={cardSize}
-                swipeDx={swipeDx}
-                animate={dragAnimating}
-                onPointerDown={onCardPointerDown}
-                onPointerMove={onCardPointerMove}
-                onPointerUp={onCardPointerUp}
-              />
-            </div>
-
-            <button className="choice-button choice-button-right swipe-side-button" onClick={() => animateSwipe('right')}>
+            <button className="choice-button choice-button-right" onClick={() => animateSwipe('right')}>
               Keep
             </button>
-          </div>
+          </footer>
         </section>
       ) : null}
 
       {screen === 'vote' && votePair ? (
-        <section className="game-panel" ref={votePanelRef}>
-          <header className="hud" ref={voteHudRef}>
-            <div className="headline-chip vote-headline">Vote Round</div>
-            <div className="hud-copy vote-copy">
+        <section className="game-panel">
+          <header className="hud">
+            <div className="headline-chip">Vote Round</div>
+            <div className="hud-copy">
               <h2>Which card should rank higher?</h2>
               <p>
                 This round inserts each kept card into the final order through pairwise choices.
               </p>
             </div>
-            <div className="progress-pill vote-progress">
+            <div className="progress-pill">
               {Math.min((voteSession?.challengerIndex ?? 0) + 1, shortlisted.length)} / {shortlisted.length}
             </div>
           </header>
@@ -633,7 +778,7 @@ export default function HomePage() {
             <button className="vote-card-button" onClick={() => handleVote(votePair.left.id)}>
               <CardView card={votePair.left} cardSize={cardSize} />
             </button>
-            <div className="versus-pill vote-versus">vs</div>
+            <div className="versus-pill">vs</div>
             <button className="vote-card-button" onClick={() => handleVote(votePair.right.id)}>
               <CardView card={votePair.right} cardSize={cardSize} />
             </button>
@@ -642,18 +787,32 @@ export default function HomePage() {
       ) : null}
 
       {screen === 'results' ? (
-        <section className="game-panel results-panel">
+        <section className="panel results-panel">
           <div className="results-topbar">
             <button className="secondary-button" onClick={resetGame}>
               Restart
             </button>
+            <div className="headline-chip">Final Results</div>
+          </div>
+
+          <div className="results-copy">
+            <h2>Your ranked cards</h2>
+            <p>
+              {results.length > 1
+                ? 'The shortlist was ordered by the head-to-head vote phase.'
+                : results.length === 1
+                  ? 'Only one card was kept during swiping, so it wins by default.'
+                  : 'No cards were kept during swiping.'}
+            </p>
           </div>
 
           {results.length > 0 ? (
             <div className="results-list">
-              {results.map((card) => (
+              {results.map((card, index) => (
                 <div className="result-row" key={card.id}>
+                  <div className="result-rank">#{index + 1}</div>
                   <img className="result-thumb" src={card.image} alt={card.title} />
+                  <div className="result-text">{card.title}</div>
                 </div>
               ))}
             </div>
