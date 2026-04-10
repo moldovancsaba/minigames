@@ -820,12 +820,7 @@ export default function HomePage() {
     >
       {screen === 'start' ? (
         <section className="panel start-panel">
-          <div className="headline-chip">Minigames</div>
-          <h1>Choose a game and start playing.</h1>
-          <p>
-            Swipe keeps your favorite cards and ranks them. Scratch reveals three rewards from
-            a silver ticket grid to find a matching prize.
-          </p>
+          <h1>PLAY</h1>
           <div className="start-action-row">
             <button className="primary-button" onClick={startSwipeGame}>
               Play Swipe
