@@ -28,6 +28,9 @@ const SCRATCH_MATCH_TO_WIN = 3;
 const WHEEL_SECTIONS = 6;
 const WHEEL_SPIN_LIMIT = 4;
 const WHEEL_MATCH_TO_WIN = 3;
+const BUBBLE_COUNT = 12;
+const BUBBLE_POP_LIMIT = 5;
+const BUBBLE_MATCH_TO_WIN = 3;
 
 const PRIZE_DEFINITIONS = {
   ticket: {
@@ -75,6 +78,15 @@ function createWheelSections() {
 
   return shuffle(basePrizes).map((prize, index) => ({
     id: `wheel-${index + 1}`,
+    prize
+  }));
+}
+
+function createBubbleBoard() {
+  const prizes = Array.from({ length: BUBBLE_COUNT }, (_, index) => (index < BUBBLE_COUNT / 2 ? 'apple' : 'ticket'));
+
+  return shuffle(prizes).map((prize, index) => ({
+    id: `bubble-${index + 1}`,
     prize
   }));
 }
@@ -470,6 +482,8 @@ export default function HomePage() {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [wheelSpins, setWheelSpins] = useState([]);
   const [wheelIsSpinning, setWheelIsSpinning] = useState(false);
+  const [bubbleTiles, setBubbleTiles] = useState([]);
+  const [poppedBubbleIds, setPoppedBubbleIds] = useState([]);
 
   const pointerIdRef = useRef(null);
   const startXRef = useRef(0);
@@ -511,6 +525,13 @@ export default function HomePage() {
   }, {});
   const wheelWinningPrize = Object.entries(wheelCounts).find(([, count]) => count >= WHEEL_MATCH_TO_WIN)?.[0] ?? null;
   const wheelIsComplete = Boolean(wheelWinningPrize) || wheelSpins.length >= WHEEL_SPIN_LIMIT;
+  const poppedBubbles = bubbleTiles.filter((bubble) => poppedBubbleIds.includes(bubble.id));
+  const bubbleCounts = poppedBubbles.reduce((accumulator, bubble) => {
+    accumulator[bubble.prize] = (accumulator[bubble.prize] || 0) + 1;
+    return accumulator;
+  }, {});
+  const bubbleWinningPrize = Object.entries(bubbleCounts).find(([, count]) => count >= BUBBLE_MATCH_TO_WIN)?.[0] ?? null;
+  const bubbleIsComplete = Boolean(bubbleWinningPrize) || poppedBubbleIds.length >= BUBBLE_POP_LIMIT;
 
   function resetGame() {
     setScreen('start');
@@ -528,6 +549,8 @@ export default function HomePage() {
     setWheelRotation(0);
     setWheelSpins([]);
     setWheelIsSpinning(false);
+    setBubbleTiles([]);
+    setPoppedBubbleIds([]);
   }
 
   function startSwipeGame() {
@@ -543,6 +566,8 @@ export default function HomePage() {
     setWheelRotation(0);
     setWheelSpins([]);
     setWheelIsSpinning(false);
+    setBubbleTiles([]);
+    setPoppedBubbleIds([]);
     setScreen('swipe');
   }
 
@@ -557,6 +582,8 @@ export default function HomePage() {
     setScratchTiles(createScratchTiles());
     setRevealedScratchTileIds([]);
     setScratchRound((current) => current + 1);
+    setBubbleTiles([]);
+    setPoppedBubbleIds([]);
     setScreen('scratch');
   }
 
@@ -575,7 +602,29 @@ export default function HomePage() {
     setWheelRotation(0);
     setWheelSpins([]);
     setWheelIsSpinning(false);
+    setBubbleTiles([]);
+    setPoppedBubbleIds([]);
     setScreen('wheel');
+  }
+
+  function startBubbleGame() {
+    setDeck([]);
+    setSwipeIndex(0);
+    setShortlisted([]);
+    setResults([]);
+    setVoteSession(null);
+    setSwipeDx(0);
+    setDragAnimating(false);
+    setScratchTiles([]);
+    setRevealedScratchTileIds([]);
+    setScratchRound(0);
+    setWheelSections([]);
+    setWheelRotation(0);
+    setWheelSpins([]);
+    setWheelIsSpinning(false);
+    setBubbleTiles(createBubbleBoard());
+    setPoppedBubbleIds([]);
+    setScreen('bubble');
   }
 
   function spinWheel() {
@@ -607,6 +656,20 @@ export default function HomePage() {
       }
 
       return [...current, tileId];
+    });
+  }
+
+  function popBubble(bubbleId) {
+    if (bubbleIsComplete) {
+      return;
+    }
+
+    setPoppedBubbleIds((current) => {
+      if (current.includes(bubbleId) || current.length >= BUBBLE_POP_LIMIT) {
+        return current;
+      }
+
+      return [...current, bubbleId];
     });
   }
 
@@ -773,7 +836,64 @@ export default function HomePage() {
             <button className="primary-button primary-button-wheel" onClick={startWheelGame}>
               Play Wheel
             </button>
+            <button className="primary-button primary-button-bubble" onClick={startBubbleGame}>
+              Play Bubble
+            </button>
           </div>
+        </section>
+      ) : null}
+
+      {screen === 'bubble' ? (
+        <section className="game-panel bubble-panel">
+          <header className="hud bubble-hud">
+            <div className="headline-chip">Bubble Round</div>
+            <div className="hud-copy">
+              <h2>Pop up to 5 bubbles</h2>
+              <p>
+                You win when 3 popped bubbles match. Popped bubbles reveal emoji only.
+              </p>
+            </div>
+            <div className="progress-pill">
+              {poppedBubbleIds.length} / {BUBBLE_POP_LIMIT}
+            </div>
+          </header>
+
+          <div className={`bubble-grid bubble-grid-${orientation}`}>
+            {bubbleTiles.map((bubble) => {
+              const popped = poppedBubbleIds.includes(bubble.id);
+              return (
+                <button
+                  key={bubble.id}
+                  className={`bubble-tile ${popped ? 'bubble-tile-popped' : ''}`}
+                  onClick={() => popBubble(bubble.id)}
+                  disabled={popped || bubbleIsComplete}
+                >
+                  {popped ? <span className="bubble-emoji">{PRIZE_DEFINITIONS[bubble.prize].emoji}</span> : <span className="bubble-shine" />}
+                </button>
+              );
+            })}
+          </div>
+
+          <footer className="bubble-footer">
+            {bubbleIsComplete ? (
+              <div className={`scratch-result ${bubbleWinningPrize ? 'scratch-result-win' : 'scratch-result-lose'}`}>
+                {bubbleWinningPrize
+                  ? `You won: ${PRIZE_DEFINITIONS[bubbleWinningPrize].label}`
+                  : 'No 3-match in 5 pops. Try again.'}
+              </div>
+            ) : (
+              <div className="scratch-result scratch-result-neutral">Pop bubbles and match 3 of the same prize.</div>
+            )}
+
+            <div className="scratch-buttons">
+              <button className="secondary-button" onClick={resetGame}>
+                Back
+              </button>
+              <button className="primary-button primary-button-bubble" onClick={startBubbleGame}>
+                New Bubble
+              </button>
+            </div>
+          </footer>
         </section>
       ) : null}
 
