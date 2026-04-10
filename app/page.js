@@ -32,7 +32,44 @@ function getOrientation() {
   return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
 }
 
-function calculateCardFrame(mode, orientation) {
+function fitCardToBox(maxWidth, maxHeight, minWidth = 170, minHeight = 220) {
+  const aspectRatio = 0.76;
+  const safeWidth = Math.max(0, maxWidth);
+  const safeHeight = Math.max(0, maxHeight);
+
+  if (safeWidth === 0 || safeHeight === 0) {
+    return { width: minWidth, height: minHeight };
+  }
+
+  let width = Math.min(safeWidth, safeHeight * aspectRatio);
+  let height = width / aspectRatio;
+
+  if (height > safeHeight) {
+    height = safeHeight;
+    width = height * aspectRatio;
+  }
+
+  return {
+    width: Math.max(minWidth, Math.floor(width)),
+    height: Math.max(minHeight, Math.floor(height))
+  };
+}
+
+function calculateCardFrame(mode, orientation, layoutBox = null) {
+  if (layoutBox) {
+    if (mode === 'swipe') {
+      return fitCardToBox(layoutBox.width * 0.94, layoutBox.height * 0.96, 150, 200);
+    }
+
+    if (mode === 'vote') {
+      if (orientation === 'landscape') {
+        return fitCardToBox((layoutBox.width - 84) / 2, layoutBox.height * 0.92, 145, 190);
+      }
+
+      return fitCardToBox(layoutBox.width * 0.82, (layoutBox.height - 56) / 2, 145, 190);
+    }
+  }
+
   const width = typeof window === 'undefined' ? 390 : window.innerWidth;
   const height = typeof window === 'undefined' ? 844 : window.innerHeight;
   const safePadding = 24;
@@ -235,9 +272,15 @@ export default function HomePage() {
   const [voteSession, setVoteSession] = useState(null);
   const [swipeDx, setSwipeDx] = useState(0);
   const [dragAnimating, setDragAnimating] = useState(false);
+  const [layoutBox, setLayoutBox] = useState(null);
 
   const pointerIdRef = useRef(null);
   const startXRef = useRef(0);
+  const swipePanelRef = useRef(null);
+  const swipeHudRef = useRef(null);
+  const swipeActionsRef = useRef(null);
+  const votePanelRef = useRef(null);
+  const voteHudRef = useRef(null);
 
   useEffect(() => {
     const update = () => setOrientation(getOrientation());
@@ -279,8 +322,64 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const measureLayout = () => {
+      if (screen === 'swipe' && swipePanelRef.current) {
+        const panelRect = swipePanelRef.current.getBoundingClientRect();
+        const hudRect = swipeHudRef.current?.getBoundingClientRect();
+        const actionsRect = swipeActionsRef.current?.getBoundingClientRect();
+        const stageHeight =
+          panelRect.height - (hudRect?.height || 0) - (actionsRect?.height || 0) - 24;
+
+        setLayoutBox({
+          width: panelRect.width,
+          height: Math.max(0, stageHeight)
+        });
+        return;
+      }
+
+      if (screen === 'vote' && votePanelRef.current) {
+        const panelRect = votePanelRef.current.getBoundingClientRect();
+        const hudRect = voteHudRef.current?.getBoundingClientRect();
+        const stageHeight = panelRect.height - (hudRect?.height || 0) - 12;
+
+        setLayoutBox({
+          width: panelRect.width,
+          height: Math.max(0, stageHeight)
+        });
+        return;
+      }
+
+      setLayoutBox(null);
+    };
+
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureLayout);
+    const activeElements =
+      screen === 'swipe'
+        ? [swipePanelRef.current, swipeHudRef.current, swipeActionsRef.current]
+        : screen === 'vote'
+          ? [votePanelRef.current, voteHudRef.current]
+          : [];
+
+    activeElements.forEach((element) => {
+      if (element && observer) {
+        observer.observe(element);
+      }
+    });
+
+    measureLayout();
+    window.addEventListener('resize', measureLayout);
+    window.addEventListener('orientationchange', measureLayout);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measureLayout);
+      window.removeEventListener('orientationchange', measureLayout);
+    };
+  }, [screen, orientation]);
+
   const mode = screen === 'vote' ? 'vote' : screen === 'results' ? 'results' : 'swipe';
-  const cardSize = useMemo(() => calculateCardFrame(mode, orientation), [mode, orientation]);
+  const cardSize = useMemo(() => calculateCardFrame(mode, orientation, layoutBox), [layoutBox, mode, orientation]);
   const currentCard = deck[swipeIndex] ?? null;
   const votePair = getVotePair(voteSession);
 
@@ -465,8 +564,8 @@ export default function HomePage() {
       ) : null}
 
       {screen === 'swipe' && currentCard ? (
-        <section className="game-panel">
-          <header className="hud">
+        <section className="game-panel" ref={swipePanelRef}>
+          <header className="hud" ref={swipeHudRef}>
             <div className="headline-chip">Swipe Round</div>
             <div className="hud-copy">
               <h2>Keep the cards you like</h2>
@@ -492,7 +591,7 @@ export default function HomePage() {
             />
           </div>
 
-          <footer className="action-row">
+          <footer className="action-row" ref={swipeActionsRef}>
             <button className="choice-button choice-button-left" onClick={() => animateSwipe('left')}>
               Skip
             </button>
@@ -504,8 +603,8 @@ export default function HomePage() {
       ) : null}
 
       {screen === 'vote' && votePair ? (
-        <section className="game-panel">
-          <header className="hud">
+        <section className="game-panel" ref={votePanelRef}>
+          <header className="hud" ref={voteHudRef}>
             <div className="headline-chip">Vote Round</div>
             <div className="hud-copy">
               <h2>Which card should rank higher?</h2>
