@@ -204,10 +204,23 @@ img {
 
 .hud {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--space-2);
   align-items: center;
   padding-bottom: var(--space-2);
+}
+
+.hud-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+
+.hud-copy p {
+  max-width: none;
 }
 
 .center-stage {
@@ -228,26 +241,23 @@ img {
 }
 
 .swipe-stage-portrait {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, minmax(0, max-content));
   grid-template-rows: 1fr auto;
+  justify-content: center;
 }
 
 .swipe-stage-portrait .center-stage {
   width: 100%;
+  grid-column: 1 / -1;
 }
 
 .swipe-stage-portrait .swipe-side-button {
-  width: min(100%, calc(var(--button-width) * 2.2));
-}
-
-.swipe-stage-portrait .swipe-side-button:first-child {
+  min-width: clamp(88px, 24vw, 118px);
+  width: clamp(88px, 24vw, 118px);
+  min-height: clamp(38px, 5.2vh, 48px);
+  padding: 0 clamp(12px, 2.2vw, 18px);
+  font-size: clamp(0.86rem, 1.8vh, 0.98rem);
   grid-row: 2;
-  transform: translateX(calc(-50% - var(--space-1)));
-}
-
-.swipe-stage-portrait .swipe-side-button:last-child {
-  grid-row: 2;
-  transform: translateX(calc(50% + var(--space-1)));
 }
 
 .swipe-stage-landscape {
@@ -426,8 +436,6 @@ img {
   }
 
   .hud-copy {
-    display: flex;
-    flex-direction: column;
     gap: 6px;
   }
 
@@ -436,20 +444,22 @@ img {
     grid-template-rows: 1fr auto;
   }
 
-  .swipe-stage-landscape .swipe-side-button:first-child {
+  .swipe-stage-landscape .swipe-side-button {
     grid-row: 2;
-    transform: translateX(calc(-50% - var(--space-1)));
-  }
-
-  .swipe-stage-landscape .swipe-side-button:last-child {
-    grid-row: 2;
-    transform: translateX(calc(50% + var(--space-1)));
   }
 }
 
 @media (orientation: landscape) {
   .app-shell-results .panel {
     max-width: min(860px, 100%);
+  }
+
+  .hud-copy h2 {
+    font-size: clamp(1.45rem, 3.4vw, 2.8rem);
+  }
+
+  .hud-copy p {
+    font-size: clamp(0.84rem, 1.4vw, 1rem);
   }
 }
 
@@ -467,5 +477,16 @@ img {
   .panel,
   .card-shell {
     box-shadow: 0 14px 28px rgba(36, 49, 76, 0.2);
+  }
+
+  .swipe-stage-portrait {
+    gap: var(--space-1);
+  }
+
+  .swipe-stage-portrait .swipe-side-button {
+    min-width: clamp(82px, 22vw, 104px);
+    width: clamp(82px, 22vw, 104px);
+    min-height: clamp(34px, 4.6vh, 42px);
+    font-size: clamp(0.8rem, 1.6vh, 0.92rem);
   }
 }
