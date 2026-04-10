@@ -585,7 +585,7 @@ export default function HomePage() {
 
     const resultIndex = Math.floor(Math.random() * wheelSections.length);
     const sectorAngle = 360 / wheelSections.length;
-    const targetNorm = (330 - resultIndex * sectorAngle + 360) % 360;
+    const targetNorm = (360 - resultIndex * sectorAngle) % 360;
     const currentNorm = ((wheelRotation % 360) + 360) % 360;
     const extraTurns = 3 + Math.floor(Math.random() * 3);
     const delta = (targetNorm - currentNorm + 360) % 360 + extraTurns * 360;
@@ -810,7 +810,7 @@ export default function HomePage() {
                     <div
                       key={`divider-${index}`}
                       className="wheel-divider"
-                      style={{ transform: `translateX(-50%) rotate(${-60 + index * 60}deg)` }}
+                      style={{ transform: `translateX(-50%) rotate(${-90 + index * 60}deg)` }}
                     />
                   ))}
                   {wheelSections.map((section, index) => {
