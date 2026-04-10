@@ -515,7 +515,7 @@ img {
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 246, 197, 0.26), rgba(255, 246, 197, 0) 42%),
     conic-gradient(
-      from -120deg,
+      from -90deg,
       #ff9135 0deg 60deg,
       #4d84f2 60deg 120deg,
       #ea5a87 120deg 180deg,
