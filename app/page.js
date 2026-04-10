@@ -641,32 +641,18 @@ export default function HomePage() {
       ) : null}
 
       {screen === 'results' ? (
-        <section className="panel results-panel">
+        <section className="game-panel results-panel">
           <div className="results-topbar">
             <button className="secondary-button" onClick={resetGame}>
               Restart
             </button>
-            <div className="headline-chip">Final Results</div>
-          </div>
-
-          <div className="results-copy">
-            <h2>Your ranked cards</h2>
-            <p>
-              {results.length > 1
-                ? 'The shortlist was ordered by the head-to-head vote phase.'
-                : results.length === 1
-                  ? 'Only one card was kept during swiping, so it wins by default.'
-                  : 'No cards were kept during swiping.'}
-            </p>
           </div>
 
           {results.length > 0 ? (
             <div className="results-list">
-              {results.map((card, index) => (
+              {results.map((card) => (
                 <div className="result-row" key={card.id}>
-                  <div className="result-rank">#{index + 1}</div>
                   <img className="result-thumb" src={card.image} alt={card.title} />
-                  <div className="result-text">{card.title}</div>
                 </div>
               ))}
             </div>
