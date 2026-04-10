@@ -32,11 +32,15 @@ const WHEEL_MATCH_TO_WIN = 3;
 const PRIZE_DEFINITIONS = {
   ticket: {
     label: 'Free Ticket',
-    emoji: '🎟️'
+    emoji: '🎟️',
+    line1: 'Free',
+    line2: 'Ticket'
   },
   apple: {
     label: 'Free Apple',
-    emoji: '🍎'
+    emoji: '🍎',
+    line1: 'Free',
+    line2: 'Apple'
   }
 };
 
@@ -806,25 +810,27 @@ export default function HomePage() {
                     <div
                       key={`divider-${index}`}
                       className="wheel-divider"
-                      style={{ transform: `translateX(-50%) rotate(${index * 60}deg)` }}
+                      style={{ transform: `translateX(-50%) rotate(${-60 + index * 60}deg)` }}
                     />
                   ))}
                   {wheelSections.map((section, index) => {
                     const segment = 360 / WHEEL_SECTIONS;
-                    const angleDeg = -90 + index * segment + segment / 2;
+                    const angleDeg = -90 + index * segment;
                     const radians = (angleDeg * Math.PI) / 180;
                     const radiusPercent = 34;
                     const left = 50 + Math.cos(radians) * radiusPercent;
                     const top = 50 + Math.sin(radians) * radiusPercent;
+                    const textRotation = angleDeg + 90;
 
                     return (
                       <div
                         key={section.id}
                         className="wheel-label"
-                        style={{ left: `${left}%`, top: `${top}%` }}
+                        style={{ left: `${left}%`, top: `${top}%`, transform: `translate(-50%, -50%) rotate(${textRotation}deg)` }}
                       >
                         <span>{PRIZE_DEFINITIONS[section.prize].emoji}</span>
-                        <strong>{PRIZE_DEFINITIONS[section.prize].label}</strong>
+                        <strong>{PRIZE_DEFINITIONS[section.prize].line1}</strong>
+                        <strong>{PRIZE_DEFINITIONS[section.prize].line2}</strong>
                       </div>
                     );
                   })}
@@ -834,6 +840,14 @@ export default function HomePage() {
                   {wheelIsSpinning ? 'Spinning...' : 'SPIN'}
                 </button>
               </div>
+
+              {wheelIsComplete ? (
+                <div className={`wheel-result-overlay ${wheelWinningPrize ? 'scratch-result-overlay-win' : 'scratch-result-overlay-lose'}`}>
+                  {wheelWinningPrize
+                    ? `You won: ${PRIZE_DEFINITIONS[wheelWinningPrize].label}`
+                    : 'No 3-match in 4 spins. Try again.'}
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -850,15 +864,9 @@ export default function HomePage() {
               )}
             </div>
 
-            {wheelIsComplete ? (
-              <div className={`scratch-result ${wheelWinningPrize ? 'scratch-result-win' : 'scratch-result-lose'}`}>
-                {wheelWinningPrize
-                  ? `You won: ${PRIZE_DEFINITIONS[wheelWinningPrize].label}`
-                  : 'No 3-match in 4 spins. Try again.'}
-              </div>
-            ) : (
+            {!wheelIsComplete ? (
               <div className="scratch-result scratch-result-neutral">Get 3 of the same prize within 4 spins.</div>
-            )}
+            ) : null}
 
             <div className="scratch-buttons">
               <button className="secondary-button" onClick={resetGame}>
