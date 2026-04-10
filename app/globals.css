@@ -337,10 +337,21 @@ img {
 }
 
 .vote-stage-portrait {
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   gap: var(--space-1);
+  width: 100%;
+}
+
+.vote-stage-portrait .vote-card-button {
+  flex: 0 0 auto;
+  display: block;
+}
+
+.vote-stage-portrait .vote-card-button .card-shell {
+  transform: none !important;
 }
 
 .vote-stage-landscape {
