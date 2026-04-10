@@ -78,8 +78,11 @@ img {
 
 .start-action-row {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
 }
 
 .start-panel h1,
@@ -141,12 +144,13 @@ img {
 }
 
 .primary-button {
-  min-width: 160px;
-  min-height: 58px;
-  padding: 0 28px;
+  min-width: clamp(210px, 54vw, 320px);
+  min-height: 64px;
+  padding: 0 34px;
   background: linear-gradient(135deg, var(--berry), var(--orange));
   color: white;
   box-shadow: 0 14px 28px rgba(212, 71, 95, 0.28);
+  font-size: 1.18rem;
 }
 
 .primary-button-alt {
