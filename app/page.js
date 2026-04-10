@@ -100,20 +100,21 @@ function createBubbleBoard() {
   );
   const prizes = shuffle(['banana', 'banana', 'peach', ...randomPrizePool]);
   const placed = [];
+  const width = typeof window === 'undefined' ? 390 : window.innerWidth;
+  const bubbleSize = Math.max(124, Math.min(168, Math.floor(width * 0.19)));
 
   return shuffle(prizes).map((prize, index) => {
     let left = 20;
     let top = 30;
-    let size = 110;
+    let size = bubbleSize;
     let placedOk = false;
 
     for (let attempt = 0; attempt < 90; attempt += 1) {
-      const candidateSize = 100 + Math.random() * 38;
       const candidateLeft = 10 + Math.random() * 80;
       const candidateTop = 16 + Math.random() * 68;
 
       const collision = placed.some((other) => {
-        const minDistance = (candidateSize + other.size) * 0.34;
+        const minDistance = (bubbleSize + other.size) * 0.34;
         const dx = candidateLeft - other.left;
         const dy = candidateTop - other.top;
         return Math.sqrt(dx * dx + dy * dy) < minDistance;
@@ -122,7 +123,7 @@ function createBubbleBoard() {
       if (!collision) {
         left = candidateLeft;
         top = candidateTop;
-        size = candidateSize;
+        size = bubbleSize;
         placed.push({ left, top, size });
         placedOk = true;
         break;
@@ -134,7 +135,7 @@ function createBubbleBoard() {
       const fallbackTop = 24 + Math.floor(index / 6) * 26;
       left = fallbackLeft;
       top = fallbackTop;
-      size = 108;
+      size = bubbleSize;
       placed.push({ left, top, size });
     }
 
