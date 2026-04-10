@@ -115,13 +115,13 @@ function createBubbleBoard() {
     return {
       id: `bubble-${index + 1}`,
       prize,
-      left: 6 + Math.random() * 88,
-      top: 10 + Math.random() * 82,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
       size,
       floatY,
       floatX,
       duration,
-      delay: Math.random() * 2.2
+      delay: 0
     };
   });
 }
@@ -911,22 +911,33 @@ export default function HomePage() {
                     '--bubble-delay': `${bubble.delay}s`
                   }}
                 >
-                  {popped ? <span className="bubble-emoji">{PRIZE_DEFINITIONS[bubble.prize].emoji}</span> : <span className="bubble-shine" />}
+                  {popped ? (
+                    <span
+                      className="bubble-emoji"
+                      style={{ fontSize: `${Math.floor(bubble.size * 0.62)}px` }}
+                    >
+                      {PRIZE_DEFINITIONS[bubble.prize].emoji}
+                    </span>
+                  ) : (
+                    <span className="bubble-shine" />
+                  )}
                 </button>
               );
             })}
-          </div>
 
-          <footer className="bubble-footer">
             {bubbleIsComplete ? (
-              <div className={`scratch-result ${bubbleWinningPrize ? 'scratch-result-win' : 'scratch-result-lose'}`}>
+              <div className={`bubble-result-overlay ${bubbleWinningPrize ? 'scratch-result-overlay-win' : 'scratch-result-overlay-lose'}`}>
                 {bubbleWinningPrize
                   ? `You won: ${PRIZE_DEFINITIONS[bubbleWinningPrize].label}`
                   : 'No 3-match in 5 pops. Try again.'}
               </div>
-            ) : (
+            ) : null}
+          </div>
+
+          <footer className="bubble-footer">
+            {!bubbleIsComplete ? (
               <div className="scratch-result scratch-result-neutral">Pop bubbles and match 3 of the same prize.</div>
-            )}
+            ) : null}
 
             <div className="scratch-buttons">
               <button className="secondary-button" onClick={resetGame}>
