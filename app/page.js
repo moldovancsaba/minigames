@@ -180,6 +180,26 @@ function getVotePair(session) {
   };
 }
 
+async function enterImmersiveMode() {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const root = document.documentElement;
+
+  try {
+    if (!document.fullscreenElement && root.requestFullscreen) {
+      await root.requestFullscreen({ navigationUI: 'hide' });
+    }
+  } catch {}
+
+  try {
+    if (window.screen?.orientation?.lock) {
+      await window.screen.orientation.lock(getOrientation());
+    }
+  } catch {}
+}
+
 function CardView({ card, cardSize, swipeDx = 0, animate = false, onPointerDown, onPointerMove, onPointerUp, showHint = false }) {
   return (
     <div
@@ -275,7 +295,8 @@ export default function HomePage() {
     setDragAnimating(false);
   }
 
-  function startGame() {
+  async function startGame() {
+    await enterImmersiveMode();
     setDeck(shuffle(CARD_IMAGES));
     setSwipeIndex(0);
     setShortlisted([]);
