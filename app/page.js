@@ -899,7 +899,8 @@ export default function HomePage() {
                   key={bubble.id}
                   className={`bubble-tile bubble-stage-item ${popped ? 'bubble-tile-popped' : ''}`}
                   onClick={() => popBubble(bubble.id)}
-                  disabled={popped || bubbleIsComplete}
+                  disabled={bubbleIsComplete}
+                  aria-disabled={popped || bubbleIsComplete}
                   style={{
                     left: `${bubble.left}%`,
                     top: `${bubble.top}%`,
