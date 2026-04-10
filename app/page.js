@@ -420,6 +420,7 @@ export default function HomePage() {
   const [dragAnimating, setDragAnimating] = useState(false);
   const [scratchTiles, setScratchTiles] = useState([]);
   const [revealedScratchTileIds, setRevealedScratchTileIds] = useState([]);
+  const [scratchRound, setScratchRound] = useState(0);
 
   const pointerIdRef = useRef(null);
   const startXRef = useRef(0);
@@ -462,6 +463,7 @@ export default function HomePage() {
     setDragAnimating(false);
     setScratchTiles([]);
     setRevealedScratchTileIds([]);
+    setScratchRound(0);
   }
 
   function startSwipeGame() {
@@ -472,6 +474,7 @@ export default function HomePage() {
     setVoteSession(null);
     setScratchTiles([]);
     setRevealedScratchTileIds([]);
+    setScratchRound(0);
     setScreen('swipe');
   }
 
@@ -485,6 +488,7 @@ export default function HomePage() {
     setDragAnimating(false);
     setScratchTiles(createScratchTiles());
     setRevealedScratchTileIds([]);
+    setScratchRound((current) => current + 1);
     setScreen('scratch');
   }
 
@@ -663,7 +667,7 @@ export default function HomePage() {
       ) : null}
 
       {screen === 'scratch' ? (
-        <section className="panel scratch-panel">
+        <section className="game-panel scratch-panel">
           <header className="hud scratch-hud">
             <div className="headline-chip">Scratch Round</div>
             <div className="hud-copy">
@@ -686,7 +690,7 @@ export default function HomePage() {
           >
             {scratchTiles.map((tile) => (
               <ScratchTile
-                key={tile.id}
+                key={`${scratchRound}-${tile.id}`}
                 tile={tile}
                 size={scratchCellSize}
                 disabled={scratchIsComplete || revealedScratchTileIds.includes(tile.id)}
