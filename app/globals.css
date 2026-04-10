@@ -51,6 +51,10 @@ img {
   overflow: hidden;
 }
 
+.app-shell-bubble {
+  padding: 0;
+}
+
 .panel,
 .game-panel {
   width: min(100%, 1080px);
@@ -661,6 +665,7 @@ img {
   position: relative;
   width: 100%;
   max-width: none;
+  height: 100dvh;
   gap: 12px;
 }
 
