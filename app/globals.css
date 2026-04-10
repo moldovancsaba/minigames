@@ -659,6 +659,8 @@ img {
 
 .bubble-panel {
   position: relative;
+  width: 100%;
+  max-width: none;
   gap: 12px;
 }
 
@@ -680,7 +682,7 @@ img {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  z-index: 1;
+  z-index: 8;
 }
 
 .bubble-tile {
@@ -701,6 +703,7 @@ img {
   position: absolute;
   transform: translate(-50%, -50%);
   animation: bubble-float var(--bubble-duration) ease-in-out var(--bubble-delay) infinite alternate;
+  z-index: 1;
 }
 
 .bubble-tile:hover {
@@ -709,22 +712,26 @@ img {
 
 .bubble-tile:disabled {
   cursor: default;
-  opacity: 1;
+  opacity: 1 !important;
 }
 
 .bubble-tile-popped {
   background: transparent;
   box-shadow: none;
+  z-index: 6;
+  pointer-events: none;
 }
 
 .bubble-emoji {
   font-size: clamp(2.1rem, 5.6vw, 3rem);
   line-height: 1;
-  opacity: 1;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.24));
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+  opacity: 1 !important;
+  filter: none;
+  text-shadow: none;
   position: relative;
-  z-index: 2;
+  z-index: 7;
+  -webkit-text-fill-color: currentColor;
+  color: #ffffff;
 }
 
 .bubble-shine {
@@ -890,4 +897,9 @@ img {
   .app-shell-results .panel {
     max-width: min(860px, 100%);
   }
+}
+
+.app-shell-bubble .game-panel {
+  width: 100%;
+  max-width: none;
 }
