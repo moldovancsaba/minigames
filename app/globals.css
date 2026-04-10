@@ -332,14 +332,15 @@ img {
   flex: 1;
   min-height: 0;
   display: grid;
-  align-items: center;
+  align-items: start;
   justify-items: center;
 }
 
 .vote-stage-portrait {
   grid-template-columns: 1fr;
-  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: var(--space-2);
+  grid-template-rows: auto auto auto;
+  align-content: start;
+  gap: var(--space-1);
 }
 
 .vote-stage-landscape {
@@ -485,12 +486,16 @@ img {
   }
 
   .vote-stage-portrait {
-    gap: var(--space-1);
+    gap: 6px;
   }
 
   .versus-pill {
     min-height: clamp(32px, 4.8vh, 40px);
     padding: 0 clamp(10px, 2.1vw, 14px);
     font-size: clamp(0.8rem, 1.7vh, 0.95rem);
+  }
+
+  .vote-card-button .card-shell {
+    border-width: 3px;
   }
 }
