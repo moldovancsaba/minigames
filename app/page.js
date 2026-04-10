@@ -24,6 +24,21 @@ const SCRATCH_PRIZES = {
   }
 };
 const SCRATCH_REVEAL_LIMIT = 4;
+const SCRATCH_MATCH_TO_WIN = 3;
+const WHEEL_SECTIONS = 6;
+const WHEEL_SPIN_LIMIT = 4;
+const WHEEL_MATCH_TO_WIN = 3;
+
+const PRIZE_DEFINITIONS = {
+  ticket: {
+    label: 'Free Ticket',
+    emoji: '🎟️'
+  },
+  apple: {
+    label: 'Free Apple',
+    emoji: '🍎'
+  }
+};
 
 function shuffle(items) {
   const copy = [...items];
@@ -44,6 +59,18 @@ function createScratchTiles() {
 
   return shuffle(basePrizes).map((prize, index) => ({
     id: `scratch-${index + 1}`,
+    prize
+  }));
+}
+
+function createWheelSections() {
+  const basePrizes = [
+    ...Array.from({ length: 3 }, () => 'ticket'),
+    ...Array.from({ length: 3 }, () => 'apple')
+  ];
+
+  return shuffle(basePrizes).map((prize, index) => ({
+    id: `wheel-${index + 1}`,
     prize
   }));
 }
@@ -103,6 +130,18 @@ function calculateScratchCell(orientation) {
   const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
 
   return Math.max(88, side);
+}
+
+function calculateWheelSize(orientation) {
+  const width = typeof window === 'undefined' ? 390 : window.innerWidth;
+  const height = typeof window === 'undefined' ? 844 : window.innerHeight;
+  const horizontalPadding = orientation === 'landscape' ? width * (3 / 16) * 2 : width * (1 / 12) * 2;
+  const verticalChrome = orientation === 'landscape' ? 220 : 300;
+  const maxByWidth = Math.max(260, width - horizontalPadding);
+  const maxByHeight = Math.max(260, height - verticalChrome);
+  const side = Math.floor(Math.min(maxByWidth, maxByHeight));
+
+  return Math.max(250, Math.min(side, orientation === 'landscape' ? 520 : 620));
 }
 
 function createVoteSession(shortlisted) {
@@ -423,6 +462,10 @@ export default function HomePage() {
   const [scratchTiles, setScratchTiles] = useState([]);
   const [revealedScratchTileIds, setRevealedScratchTileIds] = useState([]);
   const [scratchRound, setScratchRound] = useState(0);
+  const [wheelSections, setWheelSections] = useState([]);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [wheelSpins, setWheelSpins] = useState([]);
+  const [wheelIsSpinning, setWheelIsSpinning] = useState(false);
 
   const pointerIdRef = useRef(null);
   const startXRef = useRef(0);
@@ -449,16 +492,21 @@ export default function HomePage() {
   const currentCard = deck[swipeIndex] ?? null;
   const votePair = getVotePair(voteSession);
   const scratchCellSize = useMemo(() => calculateScratchCell(orientation), [orientation]);
+  const wheelSize = useMemo(() => calculateWheelSize(orientation), [orientation]);
   const scratchRevealedTiles = scratchTiles.filter((tile) => revealedScratchTileIds.includes(tile.id));
-  const scratchIsComplete = revealedScratchTileIds.length >= SCRATCH_REVEAL_LIMIT;
-  const scratchDidWin =
-    scratchIsComplete &&
-    Object.values(
-      scratchRevealedTiles.reduce((accumulator, tile) => {
-        accumulator[tile.prize] = (accumulator[tile.prize] || 0) + 1;
-        return accumulator;
-      }, {})
-    ).some((count) => count >= 3);
+  const scratchCounts = scratchRevealedTiles.reduce((accumulator, tile) => {
+    accumulator[tile.prize] = (accumulator[tile.prize] || 0) + 1;
+    return accumulator;
+  }, {});
+  const scratchWinningPrize = Object.entries(scratchCounts).find(([, count]) => count >= SCRATCH_MATCH_TO_WIN)?.[0] ?? null;
+  const scratchIsComplete = Boolean(scratchWinningPrize) || revealedScratchTileIds.length >= SCRATCH_REVEAL_LIMIT;
+  const scratchDidWin = scratchIsComplete && Boolean(scratchWinningPrize);
+  const wheelCounts = wheelSpins.reduce((accumulator, prize) => {
+    accumulator[prize] = (accumulator[prize] || 0) + 1;
+    return accumulator;
+  }, {});
+  const wheelWinningPrize = Object.entries(wheelCounts).find(([, count]) => count >= WHEEL_MATCH_TO_WIN)?.[0] ?? null;
+  const wheelIsComplete = Boolean(wheelWinningPrize) || wheelSpins.length >= WHEEL_SPIN_LIMIT;
 
   function resetGame() {
     setScreen('start');
@@ -472,6 +520,10 @@ export default function HomePage() {
     setScratchTiles([]);
     setRevealedScratchTileIds([]);
     setScratchRound(0);
+    setWheelSections([]);
+    setWheelRotation(0);
+    setWheelSpins([]);
+    setWheelIsSpinning(false);
   }
 
   function startSwipeGame() {
@@ -483,6 +535,10 @@ export default function HomePage() {
     setScratchTiles([]);
     setRevealedScratchTileIds([]);
     setScratchRound(0);
+    setWheelSections([]);
+    setWheelRotation(0);
+    setWheelSpins([]);
+    setWheelIsSpinning(false);
     setScreen('swipe');
   }
 
@@ -498,6 +554,46 @@ export default function HomePage() {
     setRevealedScratchTileIds([]);
     setScratchRound((current) => current + 1);
     setScreen('scratch');
+  }
+
+  function startWheelGame() {
+    setDeck([]);
+    setSwipeIndex(0);
+    setShortlisted([]);
+    setResults([]);
+    setVoteSession(null);
+    setSwipeDx(0);
+    setDragAnimating(false);
+    setScratchTiles([]);
+    setRevealedScratchTileIds([]);
+    setScratchRound(0);
+    setWheelSections(createWheelSections());
+    setWheelRotation(0);
+    setWheelSpins([]);
+    setWheelIsSpinning(false);
+    setScreen('wheel');
+  }
+
+  function spinWheel() {
+    if (wheelIsSpinning || wheelIsComplete || wheelSections.length !== WHEEL_SECTIONS) {
+      return;
+    }
+
+    const resultIndex = Math.floor(Math.random() * wheelSections.length);
+    const sectorAngle = 360 / wheelSections.length;
+    const targetNorm = (330 - resultIndex * sectorAngle + 360) % 360;
+    const currentNorm = ((wheelRotation % 360) + 360) % 360;
+    const extraTurns = 3 + Math.floor(Math.random() * 3);
+    const delta = (targetNorm - currentNorm + 360) % 360 + extraTurns * 360;
+    const nextRotation = wheelRotation + delta;
+
+    setWheelIsSpinning(true);
+    setWheelRotation(nextRotation);
+
+    window.setTimeout(() => {
+      setWheelIsSpinning(false);
+      setWheelSpins((current) => [...current, wheelSections[resultIndex].prize]);
+    }, 1900);
   }
 
   function revealScratchTile(tileId) {
@@ -670,7 +766,91 @@ export default function HomePage() {
             <button className="primary-button primary-button-alt" onClick={startScratchGame}>
               Play Scratch
             </button>
+            <button className="primary-button primary-button-wheel" onClick={startWheelGame}>
+              Play Wheel
+            </button>
           </div>
+        </section>
+      ) : null}
+
+      {screen === 'wheel' ? (
+        <section className="game-panel wheel-panel">
+          <header className="hud wheel-hud">
+            <div className="headline-chip">Wheel Round</div>
+            <div className="hud-copy">
+              <h2>Spin up to 4 times</h2>
+              <p>
+                Win when one prize appears 3 times. Sections are shuffled on every new round.
+              </p>
+            </div>
+            <div className="progress-pill">
+              {wheelSpins.length} / {WHEEL_SPIN_LIMIT}
+            </div>
+          </header>
+
+          <div className="wheel-stage">
+            <div className="wheel-pointer" />
+            <div
+              className={`wheel-disc ${wheelIsSpinning ? 'wheel-disc-spinning' : ''}`}
+              style={{
+                width: `${wheelSize}px`,
+                height: `${wheelSize}px`,
+                transform: `rotate(${wheelRotation}deg)`
+              }}
+            >
+              <div className="wheel-face" />
+              {wheelSections.map((section, index) => {
+                const angle = index * (360 / WHEEL_SECTIONS) + 30;
+                return (
+                  <div
+                    key={section.id}
+                    className="wheel-label"
+                    style={{ transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-38%)` }}
+                  >
+                    <span>{PRIZE_DEFINITIONS[section.prize].emoji}</span>
+                    <strong>{PRIZE_DEFINITIONS[section.prize].label}</strong>
+                  </div>
+                );
+              })}
+
+              <button className="wheel-spin-button" onClick={spinWheel} disabled={wheelIsSpinning || wheelIsComplete}>
+                {wheelIsSpinning ? 'Spinning...' : 'SPIN'}
+              </button>
+            </div>
+          </div>
+
+          <footer className="wheel-footer">
+            <div className="wheel-history">
+              {wheelSpins.length > 0 ? (
+                wheelSpins.map((prize, index) => (
+                  <div className="wheel-history-chip" key={`${prize}-${index}`}>
+                    {PRIZE_DEFINITIONS[prize].emoji} {PRIZE_DEFINITIONS[prize].label}
+                  </div>
+                ))
+              ) : (
+                <div className="wheel-history-chip">Tap SPIN to start.</div>
+              )}
+            </div>
+
+            {wheelIsComplete ? (
+              <div className={`scratch-result ${wheelWinningPrize ? 'scratch-result-win' : 'scratch-result-lose'}`}>
+                {wheelWinningPrize
+                  ? `You won: ${PRIZE_DEFINITIONS[wheelWinningPrize].label}`
+                  : 'No 3-match in 4 spins. Try again.'}
+              </div>
+            ) : (
+              <div className="scratch-result scratch-result-neutral">Get 3 of the same prize within 4 spins.</div>
+            )}
+
+            <div className="scratch-buttons">
+              <button className="secondary-button" onClick={resetGame}>
+                Back
+              </button>
+              <button className="primary-button primary-button-wheel" onClick={startWheelGame}>
+                New Wheel
+              </button>
+            </div>
+          </footer>
         </section>
       ) : null}
 
@@ -679,9 +859,9 @@ export default function HomePage() {
           <header className="hud scratch-hud">
             <div className="headline-chip">Scratch Round</div>
             <div className="hud-copy">
-              <h2>Scratch exactly 4 tiles</h2>
+              <h2>Scratch up to 4 tiles</h2>
               <p>
-                Reveal four hidden gifts. Win when at least three match: Free Ticket or Free Apple.
+                Reveal up to four hidden gifts. Game stops early as soon as three match.
               </p>
             </div>
             <div className="progress-pill">
@@ -711,7 +891,7 @@ export default function HomePage() {
             {scratchIsComplete ? (
               <div className={`scratch-result-overlay ${scratchDidWin ? 'scratch-result-overlay-win' : 'scratch-result-overlay-lose'}`}>
                 {scratchDidWin ? (
-                  <span>You won: {SCRATCH_PRIZES[scratchRevealedTiles[0].prize].label}</span>
+                  <span>You won: {SCRATCH_PRIZES[scratchWinningPrize].label}</span>
                 ) : (
                   <span>No match this round. Try again.</span>
                 )}
