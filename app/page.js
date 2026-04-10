@@ -682,36 +682,40 @@ export default function HomePage() {
             </div>
           </header>
 
-          <div
-            className={`scratch-grid scratch-grid-${orientation}`}
-            style={{
-              gridTemplateColumns: `repeat(3, ${scratchCellSize}px)`,
-              gridAutoRows: `${scratchCellSize}px`
-            }}
-          >
-            {scratchTiles.map((tile) => (
-              <ScratchTile
-                key={`${scratchRound}-${tile.id}`}
-                tile={tile}
-                size={scratchCellSize}
-                disabled={scratchIsComplete || revealedScratchTileIds.includes(tile.id)}
-                onRevealed={revealScratchTile}
-              />
-            ))}
-          </div>
+          <div className="scratch-grid-wrap">
+            <div
+              className={`scratch-grid scratch-grid-${orientation}`}
+              style={{
+                gridTemplateColumns: `repeat(3, ${scratchCellSize}px)`,
+                gridAutoRows: `${scratchCellSize}px`
+              }}
+            >
+              {scratchTiles.map((tile) => (
+                <ScratchTile
+                  key={`${scratchRound}-${tile.id}`}
+                  tile={tile}
+                  size={scratchCellSize}
+                  disabled={scratchIsComplete || revealedScratchTileIds.includes(tile.id)}
+                  onRevealed={revealScratchTile}
+                />
+              ))}
+            </div>
 
-          <footer className="scratch-footer">
             {scratchIsComplete ? (
-              <div className={`scratch-result ${scratchDidWin ? 'scratch-result-win' : 'scratch-result-lose'}`}>
+              <div className={`scratch-result-overlay ${scratchDidWin ? 'scratch-result-overlay-win' : 'scratch-result-overlay-lose'}`}>
                 {scratchDidWin ? (
                   <span>You won: {SCRATCH_PRIZES[scratchRevealedTiles[0].prize].label}</span>
                 ) : (
                   <span>No match this round. Try again.</span>
                 )}
               </div>
-            ) : (
+            ) : null}
+          </div>
+
+          <footer className="scratch-footer">
+            {!scratchIsComplete ? (
               <div className="scratch-result scratch-result-neutral">Keep scratching until 4 tiles are revealed.</div>
-            )}
+            ) : null}
 
             <div className="scratch-buttons">
               <button className="secondary-button" onClick={resetGame}>
