@@ -221,17 +221,40 @@ export default function HomePage() {
 
   useEffect(() => {
     const update = () => setOrientation(getOrientation());
+    const refreshAppHeight = () => {
+      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+    };
+    const minimizeBrowserChrome = () => {
+      refreshAppHeight();
+      window.setTimeout(() => window.scrollTo(0, 1), 0);
+      window.setTimeout(() => window.scrollTo(0, 0), 60);
+    };
 
     update();
+    refreshAppHeight();
+    minimizeBrowserChrome();
+
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
     window.addEventListener('resize', update);
+    window.addEventListener('resize', refreshAppHeight);
     window.addEventListener('orientationchange', update);
+    window.addEventListener('orientationchange', minimizeBrowserChrome);
+    window.addEventListener('load', minimizeBrowserChrome);
+    window.addEventListener('pageshow', minimizeBrowserChrome);
 
     const preventGesture = (event) => event.preventDefault();
     document.addEventListener('gesturestart', preventGesture);
 
     return () => {
       window.removeEventListener('resize', update);
+      window.removeEventListener('resize', refreshAppHeight);
       window.removeEventListener('orientationchange', update);
+      window.removeEventListener('orientationchange', minimizeBrowserChrome);
+      window.removeEventListener('load', minimizeBrowserChrome);
+      window.removeEventListener('pageshow', minimizeBrowserChrome);
       document.removeEventListener('gesturestart', preventGesture);
     };
   }, []);
