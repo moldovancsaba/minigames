@@ -218,12 +218,46 @@ img {
   min-height: 0;
 }
 
-.action-row {
-  display: flex;
-  justify-content: center;
+.swipe-stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  align-items: center;
+  justify-items: center;
   gap: var(--space-2);
-  padding-top: var(--space-2);
-  flex-wrap: wrap;
+}
+
+.swipe-stage-portrait {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
+}
+
+.swipe-stage-portrait .center-stage {
+  width: 100%;
+}
+
+.swipe-stage-portrait .swipe-side-button {
+  width: min(100%, calc(var(--button-width) * 2.2));
+}
+
+.swipe-stage-portrait .swipe-side-button:first-child {
+  grid-row: 2;
+  transform: translateX(calc(-50% - var(--space-1)));
+}
+
+.swipe-stage-portrait .swipe-side-button:last-child {
+  grid-row: 2;
+  transform: translateX(calc(50% + var(--space-1)));
+}
+
+.swipe-stage-landscape {
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: 1fr;
+}
+
+.swipe-stage-landscape .swipe-side-button {
+  align-self: center;
+  min-width: clamp(96px, 12vmin, 124px);
 }
 
 .choice-button {
@@ -395,6 +429,21 @@ img {
     display: flex;
     flex-direction: column;
     gap: 6px;
+  }
+
+  .swipe-stage-landscape {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  .swipe-stage-landscape .swipe-side-button:first-child {
+    grid-row: 2;
+    transform: translateX(calc(-50% - var(--space-1)));
+  }
+
+  .swipe-stage-landscape .swipe-side-button:last-child {
+    grid-row: 2;
+    transform: translateX(calc(50% + var(--space-1)));
   }
 }
 
