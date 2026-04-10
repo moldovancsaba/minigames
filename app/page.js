@@ -23,6 +23,7 @@ const SCRATCH_PRIZES = {
     emoji: '🍎'
   }
 };
+const SCRATCH_REVEAL_LIMIT = 4;
 
 function shuffle(items) {
   const copy = [...items];
@@ -85,22 +86,22 @@ function calculateCardFrame(mode, orientation) {
 function calculateScratchCell(orientation) {
   const width = typeof window === 'undefined' ? 390 : window.innerWidth;
   const height = typeof window === 'undefined' ? 844 : window.innerHeight;
-  const safePadding = 24;
+  const horizontalPadding = 52;
+  const verticalChrome = orientation === 'landscape' ? 240 : 320;
 
   if (orientation === 'landscape') {
-    const maxBoardWidth = Math.max(270, Math.min(420, width * 0.52));
-    const maxBoardHeight = Math.max(270, Math.min(420, height - safePadding * 2 - 180));
+    const maxBoardWidth = Math.max(270, Math.min(480, width - horizontalPadding - 180));
+    const maxBoardHeight = Math.max(270, Math.min(460, height - verticalChrome));
     const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
 
     return Math.max(82, side);
   }
 
-  const availableHeight = height - safePadding * 2 - 240;
-  const maxBoardHeight = Math.max(258, Math.min(450, availableHeight));
-  const maxBoardWidth = Math.max(258, Math.min(450, width * 0.92));
+  const maxBoardHeight = Math.max(258, Math.min(500, height - verticalChrome));
+  const maxBoardWidth = Math.max(258, Math.min(500, width - horizontalPadding));
   const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
 
-  return Math.max(86, side);
+  return Math.max(80, side);
 }
 
 function createVoteSession(shortlisted) {
@@ -448,7 +449,7 @@ export default function HomePage() {
   const votePair = getVotePair(voteSession);
   const scratchCellSize = useMemo(() => calculateScratchCell(orientation), [orientation]);
   const scratchRevealedTiles = scratchTiles.filter((tile) => revealedScratchTileIds.includes(tile.id));
-  const scratchIsComplete = revealedScratchTileIds.length >= 3;
+  const scratchIsComplete = revealedScratchTileIds.length >= SCRATCH_REVEAL_LIMIT;
   const scratchDidWin =
     scratchIsComplete && new Set(scratchRevealedTiles.map((tile) => tile.prize)).size === 1;
 
@@ -494,7 +495,7 @@ export default function HomePage() {
 
   function revealScratchTile(tileId) {
     setRevealedScratchTileIds((current) => {
-      if (current.includes(tileId) || current.length >= 3) {
+      if (current.includes(tileId) || current.length >= SCRATCH_REVEAL_LIMIT) {
         return current;
       }
 
@@ -671,13 +672,13 @@ export default function HomePage() {
           <header className="hud scratch-hud">
             <div className="headline-chip">Scratch Round</div>
             <div className="hud-copy">
-              <h2>Scratch exactly 3 tiles</h2>
+              <h2>Scratch exactly 4 tiles</h2>
               <p>
-                Reveal three hidden gifts. Win if all three match: Free Ticket or Free Apple.
+                Reveal four hidden gifts. Win if all four match: Free Ticket or Free Apple.
               </p>
             </div>
             <div className="progress-pill">
-              {revealedScratchTileIds.length} / 3
+              {revealedScratchTileIds.length} / {SCRATCH_REVEAL_LIMIT}
             </div>
           </header>
 
@@ -709,7 +710,7 @@ export default function HomePage() {
                 )}
               </div>
             ) : (
-              <div className="scratch-result scratch-result-neutral">Keep scratching until 3 tiles are revealed.</div>
+              <div className="scratch-result scratch-result-neutral">Keep scratching until 4 tiles are revealed.</div>
             )}
 
             <div className="scratch-buttons">
