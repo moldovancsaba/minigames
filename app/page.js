@@ -817,7 +817,7 @@ export default function HomePage() {
                     const segment = 360 / WHEEL_SECTIONS;
                     const angleDeg = -90 + index * segment;
                     const radians = (angleDeg * Math.PI) / 180;
-                    const radiusPercent = 34;
+                    const radiusPercent = 30;
                     const left = 50 + Math.cos(radians) * radiusPercent;
                     const top = 50 + Math.sin(radians) * radiusPercent;
                     const textRotation = angleDeg + 90;

@@ -571,15 +571,16 @@ img {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   color: #fff;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  font-size: clamp(0.52rem, 1.1vw, 0.82rem);
-  line-height: 1.02;
+  font-size: clamp(1.04rem, 2.2vw, 1.64rem);
+  line-height: 1.04;
 }
 
 .wheel-label span {
-  font-size: clamp(0.96rem, 2vw, 1.35rem);
+  font-size: clamp(2.9rem, 6vw, 4.05rem);
+  line-height: 0.9;
 }
 
 .wheel-label strong {
@@ -733,11 +734,11 @@ img {
   }
 
   .wheel-label {
-    font-size: clamp(0.56rem, 2vw, 0.76rem);
+    font-size: clamp(1rem, 2.9vw, 1.35rem);
   }
 
   .wheel-label span {
-    font-size: clamp(0.9rem, 4vw, 1.2rem);
+    font-size: clamp(2.6rem, 8vw, 3.4rem);
   }
 }
 
