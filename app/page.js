@@ -29,7 +29,7 @@ function getOrientation() {
     return 'portrait';
   }
 
-  return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+  return window.innerWidth >= window.innerHeight ? 'landscape' : 'portrait';
 }
 
 function fitCardToBox(maxWidth, maxHeight, minWidth = 170, minHeight = 220) {
