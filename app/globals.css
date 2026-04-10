@@ -294,6 +294,13 @@ img {
   padding: 8px;
 }
 
+.scratch-grid-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
 .scratch-tile {
   position: relative;
   border-radius: 20px;
@@ -358,6 +365,34 @@ img {
   font-weight: 800;
   color: var(--ink);
   background: var(--panel-strong);
+}
+
+.scratch-result-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: min(86vw, 520px);
+  max-width: min(92vw, 620px);
+  padding: 18px 22px;
+  border-radius: 22px;
+  text-align: center;
+  font-weight: 900;
+  font-size: clamp(1.2rem, 3.6vw, 2rem);
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+  pointer-events: none;
+}
+
+.scratch-result-overlay-win {
+  background: linear-gradient(135deg, rgba(28, 152, 84, 0.95), rgba(10, 110, 70, 0.95));
+}
+
+.scratch-result-overlay-lose {
+  background: linear-gradient(135deg, rgba(191, 39, 88, 0.94), rgba(125, 27, 79, 0.94));
 }
 
 .scratch-result-win {
