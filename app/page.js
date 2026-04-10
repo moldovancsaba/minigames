@@ -190,23 +190,26 @@ function calculateCardFrame(mode, orientation) {
 function calculateScratchCell(orientation) {
   const width = typeof window === 'undefined' ? 390 : window.innerWidth;
   const height = typeof window === 'undefined' ? 844 : window.innerHeight;
-  const sidePaddingRatio = orientation === 'landscape' ? 3 / 16 : 1 / 12;
-  const horizontalPadding = Math.floor(width * sidePaddingRatio * 2);
+  const landscapeSidePaddingRatio = 3 / 16;
+  const landscapeHorizontalPadding = Math.floor(width * landscapeSidePaddingRatio * 2);
   const verticalChrome = orientation === 'landscape' ? 230 : 310;
 
   if (orientation === 'landscape') {
-    const maxBoardWidth = Math.max(270, Math.min(620, width - horizontalPadding));
+    const maxBoardWidth = Math.max(270, Math.min(620, width - landscapeHorizontalPadding));
     const maxBoardHeight = Math.max(270, Math.min(500, height - verticalChrome));
     const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
 
     return Math.max(86, side);
   }
 
+  const portraitGap = 12;
+  const targetBoardWidth = width * 0.95;
+  const widthLimitedSide = Math.floor((targetBoardWidth - portraitGap * 2) / 3);
   const maxBoardHeight = Math.max(258, Math.min(560, height - verticalChrome));
-  const maxBoardWidth = Math.max(258, Math.min(560, width - horizontalPadding));
-  const side = Math.floor(Math.min(maxBoardWidth, maxBoardHeight) / 3);
+  const heightLimitedSide = Math.floor((maxBoardHeight - portraitGap * 2) / 3);
+  const side = Math.floor(Math.min(widthLimitedSide, heightLimitedSide));
 
-  return Math.max(88, side);
+  return Math.max(96, side);
 }
 
 function calculateWheelSize(orientation) {
@@ -880,7 +883,7 @@ export default function HomePage() {
       style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.08), rgba(255,255,255,0.08)), url("${backgroundImage}")` }}
     >
       {screen === 'start' ? (
-        <section className="panel start-panel">
+        <section className="game-panel start-panel">
           <h1>PLAY</h1>
           <div className="start-action-row">
             <button className="primary-button" onClick={startSwipeGame}>
