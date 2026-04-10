@@ -44,6 +44,18 @@ const PRIZE_DEFINITIONS = {
     emoji: '🍎',
     line1: 'Free',
     line2: 'Apple'
+  },
+  banana: {
+    label: 'Banana',
+    emoji: '🍌',
+    line1: 'Banana',
+    line2: ''
+  },
+  peach: {
+    label: 'Peach',
+    emoji: '🍑',
+    line1: 'Peach',
+    line2: ''
   }
 };
 
@@ -83,12 +95,61 @@ function createWheelSections() {
 }
 
 function createBubbleBoard() {
-  const prizes = Array.from({ length: BUBBLE_COUNT }, (_, index) => (index < BUBBLE_COUNT / 2 ? 'apple' : 'ticket'));
+  const randomPrizePool = shuffle(
+    Array.from({ length: 9 }, (_, index) => (index < 5 ? 'apple' : 'ticket'))
+  );
+  const prizes = shuffle(['banana', 'banana', 'peach', ...randomPrizePool]);
+  const placed = [];
 
-  return shuffle(prizes).map((prize, index) => ({
-    id: `bubble-${index + 1}`,
-    prize
-  }));
+  return shuffle(prizes).map((prize, index) => {
+    let left = 20;
+    let top = 30;
+    let size = 110;
+    let placedOk = false;
+
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      const candidateSize = 100 + Math.random() * 38;
+      const candidateLeft = 10 + Math.random() * 80;
+      const candidateTop = 16 + Math.random() * 68;
+
+      const collision = placed.some((other) => {
+        const minDistance = (candidateSize + other.size) * 0.34;
+        const dx = candidateLeft - other.left;
+        const dy = candidateTop - other.top;
+        return Math.sqrt(dx * dx + dy * dy) < minDistance;
+      });
+
+      if (!collision) {
+        left = candidateLeft;
+        top = candidateTop;
+        size = candidateSize;
+        placed.push({ left, top, size });
+        placedOk = true;
+        break;
+      }
+    }
+
+    if (!placedOk) {
+      const fallbackLeft = 16 + (index % 6) * 13;
+      const fallbackTop = 24 + Math.floor(index / 6) * 26;
+      left = fallbackLeft;
+      top = fallbackTop;
+      size = 108;
+      placed.push({ left, top, size });
+    }
+
+    return {
+      id: `bubble-${index + 1}`,
+      prize,
+      left,
+      top,
+      size,
+      floatY: 12 + Math.random() * 18,
+      floatX: (Math.random() - 0.5) * 14,
+      duration: 4.8 + Math.random() * 3.4,
+      delay: Math.random() * 2.2
+    };
+  });
 }
 
 function getOrientation() {
@@ -853,15 +914,25 @@ export default function HomePage() {
             </div>
           </header>
 
-          <div className={`bubble-grid bubble-grid-${orientation}`}>
+          <div className="bubble-stage">
             {bubbleTiles.map((bubble) => {
               const popped = poppedBubbleIds.includes(bubble.id);
               return (
                 <button
                   key={bubble.id}
-                  className={`bubble-tile ${popped ? 'bubble-tile-popped' : ''}`}
+                  className={`bubble-tile bubble-stage-item ${popped ? 'bubble-tile-popped' : ''}`}
                   onClick={() => popBubble(bubble.id)}
                   disabled={popped || bubbleIsComplete}
+                  style={{
+                    left: `${bubble.left}%`,
+                    top: `${bubble.top}%`,
+                    width: `${bubble.size}px`,
+                    height: `${bubble.size}px`,
+                    '--bubble-float-y': `${bubble.floatY}px`,
+                    '--bubble-float-x': `${bubble.floatX}px`,
+                    '--bubble-duration': `${bubble.duration}s`,
+                    '--bubble-delay': `${bubble.delay}s`
+                  }}
                 >
                   {popped ? <span className="bubble-emoji">{PRIZE_DEFINITIONS[bubble.prize].emoji}</span> : <span className="bubble-shine" />}
                 </button>
