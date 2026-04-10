@@ -679,7 +679,7 @@ img {
   flex: 1;
   min-height: 0;
   position: relative;
-  border-radius: 28px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -709,6 +709,7 @@ img {
 
 .bubble-tile:disabled {
   cursor: default;
+  opacity: 1;
 }
 
 .bubble-tile-popped {
@@ -719,6 +720,11 @@ img {
 .bubble-emoji {
   font-size: clamp(2.1rem, 5.6vw, 3rem);
   line-height: 1;
+  opacity: 1;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.24));
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.24);
+  position: relative;
+  z-index: 2;
 }
 
 .bubble-shine {
@@ -742,10 +748,10 @@ img {
     transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate(-50%, -50%) translate3d(var(--bubble-float-x), calc(var(--bubble-float-y) * -1), 0) scale(1.03);
+    transform: translate(-50%, -50%) translate3d(var(--bubble-float-x), var(--bubble-float-y), 0) scale(1.03);
   }
   100% {
-    transform: translate(-50%, -50%) translate3d(calc(var(--bubble-float-x) * -0.7), calc(var(--bubble-float-y) * -1.35), 0) scale(0.99);
+    transform: translate(-50%, -50%) translate3d(calc(var(--bubble-float-x) * -0.85), calc(var(--bubble-float-y) * -0.85), 0) scale(0.99);
   }
 }
 

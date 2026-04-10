@@ -99,55 +99,28 @@ function createBubbleBoard() {
     Array.from({ length: 9 }, (_, index) => (index < 5 ? 'apple' : 'ticket'))
   );
   const prizes = shuffle(['banana', 'banana', 'peach', ...randomPrizePool]);
-  const placed = [];
   const width = typeof window === 'undefined' ? 390 : window.innerWidth;
   const bubbleSize = Math.max(124, Math.min(168, Math.floor(width * 0.19)));
 
   return shuffle(prizes).map((prize, index) => {
-    let left = 20;
-    let top = 30;
-    let size = bubbleSize;
-    let placedOk = false;
-
-    for (let attempt = 0; attempt < 90; attempt += 1) {
-      const candidateLeft = 10 + Math.random() * 80;
-      const candidateTop = 16 + Math.random() * 68;
-
-      const collision = placed.some((other) => {
-        const minDistance = (bubbleSize + other.size) * 0.34;
-        const dx = candidateLeft - other.left;
-        const dy = candidateTop - other.top;
-        return Math.sqrt(dx * dx + dy * dy) < minDistance;
-      });
-
-      if (!collision) {
-        left = candidateLeft;
-        top = candidateTop;
-        size = bubbleSize;
-        placed.push({ left, top, size });
-        placedOk = true;
-        break;
-      }
-    }
-
-    if (!placedOk) {
-      const fallbackLeft = 16 + (index % 6) * 13;
-      const fallbackTop = 24 + Math.floor(index / 6) * 26;
-      left = fallbackLeft;
-      top = fallbackTop;
-      size = bubbleSize;
-      placed.push({ left, top, size });
-    }
+    const sizeScale = 0.9 + Math.random() * 0.2;
+    const size = Math.floor(bubbleSize * sizeScale);
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 14 + Math.random() * 20;
+    const floatX = Math.cos(angle) * distance;
+    const floatY = Math.sin(angle) * distance;
+    const baseDuration = 4.8 + Math.random() * 3.4;
+    const duration = baseDuration * (0.8 + Math.random() * 0.4);
 
     return {
       id: `bubble-${index + 1}`,
       prize,
-      left,
-      top,
+      left: 6 + Math.random() * 88,
+      top: 10 + Math.random() * 82,
       size,
-      floatY: 12 + Math.random() * 18,
-      floatX: (Math.random() - 0.5) * 14,
-      duration: 4.8 + Math.random() * 3.4,
+      floatY,
+      floatX,
+      duration,
       delay: Math.random() * 2.2
     };
   });
