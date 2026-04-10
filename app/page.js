@@ -70,7 +70,8 @@ function calculateCardFrame(mode, orientation, layoutBox = null) {
         return fitCardToBox((layoutBox.width - 84) / 2, layoutBox.height * 0.92, 145, 190);
       }
 
-      return fitCardToBox(layoutBox.width * 0.82, (layoutBox.height - 56) / 2, 145, 190);
+      // Portrait vote must fit two cards + VS pill even with browser UI visible
+      return fitCardToBox(layoutBox.width * 0.78, (layoutBox.height - 72) / 2, 96, 126);
     }
   }
 
@@ -288,17 +289,23 @@ export default function HomePage() {
 
   useEffect(() => {
     const update = () => setOrientation(getOrientation());
-    const refreshAppHeight = () => {
-      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+    const refreshViewportMetrics = () => {
+      const visualHeight = window.visualViewport?.height || window.innerHeight;
+      const visualWidth = window.visualViewport?.width || window.innerWidth;
+      const browserUiOffset = Math.max(0, window.innerHeight - visualHeight);
+
+      document.documentElement.style.setProperty('--app-height', `${Math.round(visualHeight)}px`);
+      document.documentElement.style.setProperty('--app-width', `${Math.round(visualWidth)}px`);
+      document.documentElement.style.setProperty('--browser-ui-offset', `${Math.round(browserUiOffset)}px`);
     };
     const minimizeBrowserChrome = () => {
-      refreshAppHeight();
+      refreshViewportMetrics();
       window.setTimeout(() => window.scrollTo(0, 1), 0);
       window.setTimeout(() => window.scrollTo(0, 0), 60);
     };
 
     update();
-    refreshAppHeight();
+    refreshViewportMetrics();
     minimizeBrowserChrome();
 
     if ('scrollRestoration' in window.history) {
@@ -306,22 +313,26 @@ export default function HomePage() {
     }
 
     window.addEventListener('resize', update);
-    window.addEventListener('resize', refreshAppHeight);
+    window.addEventListener('resize', refreshViewportMetrics);
     window.addEventListener('orientationchange', update);
     window.addEventListener('orientationchange', minimizeBrowserChrome);
     window.addEventListener('load', minimizeBrowserChrome);
     window.addEventListener('pageshow', minimizeBrowserChrome);
+    window.visualViewport?.addEventListener('resize', refreshViewportMetrics);
+    window.visualViewport?.addEventListener('scroll', refreshViewportMetrics);
 
     const preventGesture = (event) => event.preventDefault();
     document.addEventListener('gesturestart', preventGesture);
 
     return () => {
       window.removeEventListener('resize', update);
-      window.removeEventListener('resize', refreshAppHeight);
+      window.removeEventListener('resize', refreshViewportMetrics);
       window.removeEventListener('orientationchange', update);
       window.removeEventListener('orientationchange', minimizeBrowserChrome);
       window.removeEventListener('load', minimizeBrowserChrome);
       window.removeEventListener('pageshow', minimizeBrowserChrome);
+      window.visualViewport?.removeEventListener('resize', refreshViewportMetrics);
+      window.visualViewport?.removeEventListener('scroll', refreshViewportMetrics);
       document.removeEventListener('gesturestart', preventGesture);
     };
   }, []);
@@ -605,14 +616,14 @@ export default function HomePage() {
       {screen === 'vote' && votePair ? (
         <section className="game-panel" ref={votePanelRef}>
           <header className="hud" ref={voteHudRef}>
-            <div className="headline-chip">Vote Round</div>
-            <div className="hud-copy">
+            <div className="headline-chip vote-headline">Vote Round</div>
+            <div className="hud-copy vote-copy">
               <h2>Which card should rank higher?</h2>
               <p>
                 This round inserts each kept card into the final order through pairwise choices.
               </p>
             </div>
-            <div className="progress-pill">
+            <div className="progress-pill vote-progress">
               {Math.min((voteSession?.challengerIndex ?? 0) + 1, shortlisted.length)} / {shortlisted.length}
             </div>
           </header>
@@ -621,7 +632,7 @@ export default function HomePage() {
             <button className="vote-card-button" onClick={() => handleVote(votePair.left.id)}>
               <CardView card={votePair.left} cardSize={cardSize} />
             </button>
-            <div className="versus-pill">vs</div>
+            <div className="versus-pill vote-versus">vs</div>
             <button className="vote-card-button" onClick={() => handleVote(votePair.right.id)}>
               <CardView card={votePair.right} cardSize={cardSize} />
             </button>
