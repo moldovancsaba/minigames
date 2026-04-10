@@ -58,7 +58,11 @@ function fitCardToBox(maxWidth, maxHeight, minWidth = 170, minHeight = 220) {
 function calculateCardFrame(mode, orientation, layoutBox = null) {
   if (layoutBox) {
     if (mode === 'swipe') {
-      return fitCardToBox(layoutBox.width * 0.94, layoutBox.height * 0.96, 150, 200);
+      if (orientation === 'landscape') {
+        return fitCardToBox(layoutBox.width * 0.58, layoutBox.height * 0.9, 150, 200);
+      }
+
+      return fitCardToBox(layoutBox.width * 0.9, layoutBox.height * 0.78, 150, 200);
     }
 
     if (mode === 'vote') {
@@ -278,7 +282,7 @@ export default function HomePage() {
   const startXRef = useRef(0);
   const swipePanelRef = useRef(null);
   const swipeHudRef = useRef(null);
-  const swipeActionsRef = useRef(null);
+  const swipeStageRef = useRef(null);
   const votePanelRef = useRef(null);
   const voteHudRef = useRef(null);
 
@@ -325,15 +329,11 @@ export default function HomePage() {
   useEffect(() => {
     const measureLayout = () => {
       if (screen === 'swipe' && swipePanelRef.current) {
-        const panelRect = swipePanelRef.current.getBoundingClientRect();
-        const hudRect = swipeHudRef.current?.getBoundingClientRect();
-        const actionsRect = swipeActionsRef.current?.getBoundingClientRect();
-        const stageHeight =
-          panelRect.height - (hudRect?.height || 0) - (actionsRect?.height || 0) - 24;
+        const stageRect = swipeStageRef.current?.getBoundingClientRect();
 
         setLayoutBox({
-          width: panelRect.width,
-          height: Math.max(0, stageHeight)
+          width: stageRect?.width || swipePanelRef.current.getBoundingClientRect().width,
+          height: Math.max(0, stageRect?.height || 0)
         });
         return;
       }
@@ -356,7 +356,7 @@ export default function HomePage() {
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureLayout);
     const activeElements =
       screen === 'swipe'
-        ? [swipePanelRef.current, swipeHudRef.current, swipeActionsRef.current]
+        ? [swipePanelRef.current, swipeHudRef.current, swipeStageRef.current]
         : screen === 'vote'
           ? [votePanelRef.current, voteHudRef.current]
           : [];
@@ -578,27 +578,27 @@ export default function HomePage() {
             </div>
           </header>
 
-          <div className="center-stage">
-            <CardView
-              card={currentCard}
-              cardSize={cardSize}
-              swipeDx={swipeDx}
-              animate={dragAnimating}
-              onPointerDown={onCardPointerDown}
-              onPointerMove={onCardPointerMove}
-              onPointerUp={onCardPointerUp}
-              showHint
-            />
-          </div>
-
-          <footer className="action-row" ref={swipeActionsRef}>
-            <button className="choice-button choice-button-left" onClick={() => animateSwipe('left')}>
+          <div className={`swipe-stage swipe-stage-${orientation}`} ref={swipeStageRef}>
+            <button className="choice-button choice-button-left swipe-side-button" onClick={() => animateSwipe('left')}>
               Skip
             </button>
-            <button className="choice-button choice-button-right" onClick={() => animateSwipe('right')}>
+
+            <div className="center-stage">
+              <CardView
+                card={currentCard}
+                cardSize={cardSize}
+                swipeDx={swipeDx}
+                animate={dragAnimating}
+                onPointerDown={onCardPointerDown}
+                onPointerMove={onCardPointerMove}
+                onPointerUp={onCardPointerUp}
+              />
+            </div>
+
+            <button className="choice-button choice-button-right swipe-side-button" onClick={() => animateSwipe('right')}>
               Keep
             </button>
-          </footer>
+          </div>
         </section>
       ) : null}
 
