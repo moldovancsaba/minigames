@@ -712,8 +712,8 @@ img {
 }
 
 .bubble-tile-popped {
-  background: linear-gradient(160deg, rgba(255, 248, 230, 0.96), rgba(255, 239, 206, 0.95));
-  box-shadow: 0 10px 20px rgba(36, 49, 76, 0.2);
+  background: transparent;
+  box-shadow: none;
 }
 
 .bubble-emoji {
